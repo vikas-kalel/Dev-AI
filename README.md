@@ -39,7 +39,7 @@ Dev-AI/
 
 - **Node.js** v18 or higher
 - **npm** v7 or higher
-- **Gemini API Key** — obtain from [Google AI Studio](https://aistudio.google.com/)
+- **Gemini API Key** — obtain from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 
 ---
 
