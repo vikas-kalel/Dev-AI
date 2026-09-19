@@ -1,47 +1,145 @@
-# Chat AI - Monorepo Structure
+# DevAI — Monorepo
 
-This project is organized into two completely isolated services inside a single repository:
+DevAI is an AI-powered developer chat assistant built with React 19, Vite, Express, and the Google Gemini API. It is organized as a clean npm workspaces monorepo with isolated `frontend` and `backend` packages.
+
+---
+
+## Monorepo Architecture
 
 ```
-├── frontend/             # Frontend Single Page Application (React 19 + Vite)
-│   ├── package.json      # Dedicated frontend dependencies & scripts
-│   ├── vite.config.ts    # Dedicated Vite config (runs on Port 5173 with proxy)
-│   ├── tsconfig.json     # Frontend TypeScript setup
-│   ├── node_modules/     # Independent frontend node_modules
-│   ├── index.html
-│   └── src/              # React components, styles, services
+Dev-AI/
+├── frontend/                 # Single Page Application (React 19 + Vite + Tailwind CSS)
+│   ├── package.json          # Frontend dependencies & scripts
+│   ├── tsconfig.json         # Frontend TypeScript configuration
+│   ├── vite.config.ts        # Vite config (Port 5173, proxies /api → Port 5000)
+│   ├── index.html            # HTML entry point
+│   └── src/
+│       ├── components/       # React UI components (ChatWindow, ChatInput, MessageItem, …)
+│       ├── services/         # API client (SSE streaming + REST fallback)
+│       └── types/            # Shared TypeScript interfaces
 │
-├── backend/              # Backend REST & SSE API (Express + Google GenAI)
-│   ├── package.json      # Dedicated backend dependencies & scripts
-│   ├── tsconfig.json     # Backend TypeScript setup
-│   ├── node_modules/     # Independent backend node_modules
-│   └── src/              # Routes, controllers, and services (runs on Port 5000)
+├── backend/                  # REST & SSE API (Express + Google GenAI)
+│   ├── package.json          # Backend dependencies & scripts
+│   ├── tsconfig.json         # Backend TypeScript configuration
+│   └── src/
+│       ├── config/           # Gemini API client & model configuration
+│       ├── controllers/      # Express route controllers (chat, health)
+│       ├── middleware/        # Global error handler
+│       ├── routes/           # API router (/api/chat, /api/health)
+│       ├── services/         # Gemini inference service (streaming + model fallback)
+│       └── index.ts          # Server entry point (Port 5000)
 │
-└── server.ts             # Container root gateway & reverse proxy (Port 3000)
+├── package.json              # Monorepo root — npm workspaces + concurrently
+└── README.md
 ```
 
-## Running Independently
+---
 
-### 1. Backend Service (Port 5000)
+## Prerequisites
+
+- **Node.js** v18 or higher
+- **npm** v7 or higher
+- **Gemini API Key** — obtain from [Google AI Studio](https://aistudio.google.com/)
+
+---
+
+## Getting Started
+
+### 1. Install All Dependencies
+
+From the **root** directory (installs both workspaces in one step):
+
 ```bash
-cd backend
 npm install
-npm run dev
-# Server boots at http://localhost:5000
 ```
 
-### 2. Frontend Service (Port 5173)
-```bash
-cd frontend
-npm install
-npm run dev
-# Frontend boots at http://localhost:5173 (proxies /api to localhost:5000)
+### 2. Environment Configuration
+
+Create a `.env` file inside the `backend/` directory:
+
+```env
+GEMINI_API_KEY=your-gemini-api-key-here
+PORT=5000
 ```
 
-### 3. Unified Monorepo Runner
-From the root directory:
+### 3. Run Both Servers
+
+From the **root** directory:
+
 ```bash
-npm run dev:frontend   # Launches frontend independently
-npm run dev:backend    # Launches backend independently
-npm run dev            # Launches unified gateway on port 3000
+npm run dev
 ```
+
+This uses `concurrently` to start both services simultaneously:
+
+| Service  | URL                      |
+|----------|--------------------------|
+| Backend  | http://localhost:5000    |
+| Frontend | http://localhost:5173    |
+
+The Vite dev server automatically proxies all `/api` requests to the backend on port 5000.
+
+---
+
+## Individual Service Commands
+
+Run each service independently from the root:
+
+```bash
+# Backend only (http://localhost:5000)
+npm run dev:backend
+
+# Frontend only (http://localhost:5173)
+npm run dev:frontend
+```
+
+Or from within each workspace directory:
+
+```bash
+# Backend
+cd backend && npm run dev
+
+# Frontend
+cd frontend && npm run dev
+```
+
+---
+
+## Lint & Build Commands
+
+All commands run from the **root** directory:
+
+```bash
+# Type-check both packages
+npm run lint
+
+# Build both packages for production
+npm run build
+
+# Build individual packages
+npm run build:backend
+npm run build:frontend
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint          | Description                              |
+|--------|-------------------|------------------------------------------|
+| GET    | `/api/health`     | Server health check                      |
+| POST   | `/api/chat/ask`   | Non-streaming chat response (JSON)       |
+| POST   | `/api/chat/stream`| Streaming chat response (SSE)            |
+| GET    | `/api/chat/health`| Chat service health sub-check            |
+
+---
+
+## Tech Stack
+
+| Layer     | Technology                                      |
+|-----------|-------------------------------------------------|
+| Frontend  | React 19, TypeScript, Vite 8, Tailwind CSS 4   |
+| Backend   | Node.js, Express 4, TypeScript, tsx             |
+| AI        | Google Gemini API (`@google/genai`)             |
+| Streaming | Server-Sent Events (SSE)                        |
+| Monorepo  | npm workspaces + concurrently                   |

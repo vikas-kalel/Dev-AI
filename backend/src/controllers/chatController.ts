@@ -1,7 +1,14 @@
+import type { Request, Response, NextFunction } from "express";
+import {
+  generateChatResponse,
+  generateChatStream,
+} from "../services/geminiService.js";
+import { DEFAULT_MODEL } from "../config/gemini.js";
+
 export async function askChat(
-  req: any,
-  res: any,
-  next: any
+  req: Request,
+  res: Response,
+  next: NextFunction,
 ): Promise<void> {
   try {
     const { prompt, history, model } = req.body;
@@ -23,7 +30,6 @@ export async function askChat(
       return;
     }
 
-    const { generateChatResponse } = await import("../services/geminiService.js");
     const result = await generateChatResponse({
       prompt: trimmedPrompt,
       history: Array.isArray(history) ? history : [],
@@ -43,10 +49,7 @@ export async function askChat(
   }
 }
 
-export async function streamChat(
-  req: any,
-  res: any
-): Promise<void> {
+export async function streamChat(req: Request, res: Response): Promise<void> {
   const { prompt, history, model } = req.body;
 
   if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
@@ -66,6 +69,7 @@ export async function streamChat(
     return;
   }
 
+  // Set SSE response headers
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
@@ -78,11 +82,11 @@ export async function streamChat(
     }
   };
 
+  // Only track true client disconnections/aborts before response finishes
   res.on("close", onDisconnect);
   req.on("aborted", onDisconnect);
 
   try {
-    const { generateChatStream } = await import("../services/geminiService.js");
     const result = await generateChatStream(
       {
         prompt: trimmedPrompt,
@@ -91,10 +95,12 @@ export async function streamChat(
       },
       (chunkText) => {
         if (!clientDisconnected) {
-          res.write(`data: ${JSON.stringify({ type: "chunk", text: chunkText })}\n\n`);
+          res.write(
+            `data: ${JSON.stringify({ type: "chunk", text: chunkText })}\n\n`,
+          );
         }
       },
-      () => clientDisconnected
+      () => clientDisconnected,
     );
 
     if (!clientDisconnected) {
@@ -106,25 +112,26 @@ export async function streamChat(
           durationMs: result.durationMs,
           model: result.model,
           timestamp: new Date().toISOString(),
-        })}\n\n`
+        })}\n\n`,
       );
       res.end();
     }
   } catch (error: unknown) {
-    const errMsg = error instanceof Error ? error.message : "Failed to generate stream response.";
+    const errMsg =
+      error instanceof Error
+        ? error.message
+        : "Failed to generate stream response.";
     console.error("[StreamChat Error]", error);
     if (!clientDisconnected) {
-      res.write(`data: ${JSON.stringify({ type: "error", error: errMsg })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ type: "error", error: errMsg })}\n\n`,
+      );
       res.end();
     }
   }
 }
 
-export async function getHealth(
-  _req: any,
-  res: any
-): Promise<void> {
-  const { DEFAULT_MODEL } = await import("../config/gemini.js");
+export function getHealth(_req: Request, res: Response): void {
   const hasKey = Boolean(process.env.GEMINI_API_KEY);
   res.json({
     status: "ok",
