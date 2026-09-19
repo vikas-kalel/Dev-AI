@@ -19,6 +19,14 @@ export interface ChatHistoryPayload {
   content: string;
 }
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: ChatMessage[];
+}
+
 export interface AskApiResponse {
   success: boolean;
   answer?: string;
