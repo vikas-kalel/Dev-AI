@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Local design docs
+/docs/requirements.md
+/docs/design.md
+/docs/technical-design.md
