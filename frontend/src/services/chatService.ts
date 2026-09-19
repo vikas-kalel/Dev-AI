@@ -1,8 +1,17 @@
-import type { AskApiResponse, ApiHealthResponse, ChatHistoryPayload } from "../types/chat.ts";
+import type {
+  AskApiResponse,
+  ApiHealthResponse,
+  ChatHistoryPayload,
+} from "../types/chat.ts";
 
 export interface StreamCallbacks {
   onChunk: (text: string) => void;
-  onDone: (data: { totalText: string; tokens: number; durationMs: number; model?: string }) => void;
+  onDone: (data: {
+    totalText: string;
+    tokens: number;
+    durationMs: number;
+    model?: string;
+  }) => void;
   onError: (error: string) => void;
 }
 
@@ -10,7 +19,7 @@ export async function streamAssistantResponse(
   prompt: string,
   history: ChatHistoryPayload[] = [],
   callbacks: StreamCallbacks,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<void> {
   try {
     const response = await fetch("/api/chat/stream", {
@@ -123,46 +132,6 @@ export async function streamAssistantResponse(
         ? err.message
         : "Failed to connect to the inference server.";
     callbacks.onError(errorMsg);
-  }
-}
-
-export async function askAssistant(
-  prompt: string,
-  history: ChatHistoryPayload[] = [],
-  model?: string
-): Promise<AskApiResponse> {
-  try {
-    const response = await fetch("/api/chat/ask", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-        history,
-        model,
-      }),
-    });
-
-    const data: AskApiResponse = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.error || `Server returned error (${response.status})`,
-      };
-    }
-
-    return data;
-  } catch (err: unknown) {
-    const errorMsg =
-      err instanceof Error
-        ? err.message
-        : "Failed to connect to the assistant server. Please verify your connection.";
-    return {
-      success: false,
-      error: errorMsg,
-    };
   }
 }
 

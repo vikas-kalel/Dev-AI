@@ -4,88 +4,13 @@ import { MessageList } from "./MessageList.tsx";
 import { ChatInput } from "./ChatInput.tsx";
 import { ChatFooter } from "./ChatFooter.tsx";
 import { Toast } from "./Toast.tsx";
-import { streamAssistantResponse, askAssistant } from "../services/chatService.ts";
+import { streamAssistantResponse } from "../services/chatService.ts";
 import type { ChatMessage, ChatHistoryPayload } from "../types/chat.ts";
 
 const STORAGE_KEY = "devai_chat_messages_v3";
 
-const INITIAL_DEMO_MESSAGES: ChatMessage[] = [
-  {
-    id: "demo-1",
-    role: "user",
-    content:
-      "Explain the difference between synchronous and asynchronous execution in modern web runtimes, and how this relates to handling high-throughput AI inference streams.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    status: "sent",
-  },
-  {
-    id: "demo-2",
-    role: "assistant",
-    content: `In modern runtime architectures (such as V8 in Node.js or browser web workers), the distinction between synchronous and asynchronous models governs whether the single main thread blocks on computation or delegates I/O pipelines to event loops.
-
-* **Synchronous:** Operations execute sequentially on the primary execution stack. Each call must fully resolve before transferring control.
-* **Asynchronous:** I/O workloads are scheduled onto event loop phases without stalling the primary loop or choking adjacent concurrent connections.
-
-#### Application to AI Inference Streams
-When orchestrating inference pipelines, models emit continuous token deltas via Server-Sent Events (SSE). An asynchronous non-blocking stream ensures:
-* **Zero Thread Locking:** Socket polling consumes minimal resources between iterative token emissions (15ms–80ms bursts).
-* **Backpressure Regulation:** ReadableStreams allow downstream UI consumers to throttle chunks without memory runaway.`,
-    timestamp: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
-    status: "sent",
-    tokens: 412,
-    durationMs: 1200,
-  },
-  {
-    id: "demo-3",
-    role: "user",
-    content: "Can you provide a minimal pseudo-code example of reading such an SSE stream in JavaScript?",
-    timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
-    status: "sent",
-  },
-  {
-    id: "demo-4",
-    role: "assistant",
-    content: `Baseline standard client consumption utilizing browser \`ReadableStream\` primitives:
-
-\`\`\`typescript
-// Initialize direct inference streaming request
-const response = await fetch('/v1/chat/completions', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ stream: true })
-});
-
-const reader = response.body.getReader();
-const decoder = new TextDecoder();
-
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-  
-  const chunk = decoder.decode(value, { stream: true });
-  renderDeltaToCanvas(chunk); // Flush token to DOM
-}
-\`\`\``,
-    timestamp: new Date(Date.now() - 1000 * 60 * 1).toISOString(),
-    status: "sent",
-    tokens: 264,
-    durationMs: 900,
-  },
-];
-
 export function ChatWindow() {
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {
-      // Ignore localStorage read errors
-    }
-    return INITIAL_DEMO_MESSAGES;
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [prefilledPrompt, setPrefilledPrompt] = useState<string>("");
@@ -198,8 +123,8 @@ export function ChatWindow() {
               prev.map((m) =>
                 m.id === assistantMessageId
                   ? { ...m, content: m.content + chunkText }
-                  : m
-              )
+                  : m,
+              ),
             );
             if (!isScrolledUpRef.current) {
               setTimeout(handleScrollBottom, 20);
@@ -218,8 +143,8 @@ export function ChatWindow() {
                       durationMs,
                       model,
                     }
-                  : m
-              )
+                  : m,
+              ),
             );
             setIsLoading(false);
             if (!isScrolledUpRef.current) {
@@ -237,19 +162,20 @@ export function ChatWindow() {
                       status: m.content ? "sent" : "error",
                       error: errMsg,
                     }
-                  : m
-              )
+                  : m,
+              ),
             );
             setIsLoading(false);
           },
         },
-        abortController.signal
+        abortController.signal,
       );
     } catch (err: unknown) {
       if (abortController.signal.aborted) {
         return;
       }
-      const errMsg = err instanceof Error ? err.message : "Unexpected connection failure.";
+      const errMsg =
+        err instanceof Error ? err.message : "Unexpected connection failure.";
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMessageId
@@ -259,8 +185,8 @@ export function ChatWindow() {
                 status: m.content ? "sent" : "error",
                 error: errMsg,
               }
-            : m
-        )
+            : m,
+        ),
       );
       setIsLoading(false);
     } finally {
@@ -306,12 +232,14 @@ export function ChatWindow() {
         if (m.status === "streaming") {
           return {
             ...m,
-            content: m.content.trim() ? m.content : "Generation stopped by user.",
+            content: m.content.trim()
+              ? m.content
+              : "Generation stopped by user.",
             status: "sent" as const,
           };
         }
         return m;
-      })
+      }),
     );
     setIsLoading(false);
     showToast("Generation stopped");
