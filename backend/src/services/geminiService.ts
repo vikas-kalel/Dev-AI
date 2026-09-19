@@ -35,6 +35,16 @@ const DEFAULT_SYSTEM_INSTRUCTION =
   "Provide clear, precise, and highly technical responses. Format code blocks cleanly with appropriate language tags (e.g. ```typescript, ```python). " +
   "Be concise, direct, and rigorous without unnecessary fluff.";
 
+/**
+ * Context Window Guardrails:
+ * - MAX_HISTORY_MESSAGES: Limits sliding window to the most recent 10 turns (5 full conversation rounds).
+ * - MAX_HISTORY_CHAR_BUDGET: Caps historical character context (~8,000 tokens) to prevent latency degradation and cost runaway.
+ * - MAX_SINGLE_TURN_CHARS: Protects against huge single pasted files in earlier turns.
+ */
+const MAX_HISTORY_MESSAGES = 10;
+const MAX_HISTORY_CHAR_BUDGET = 32000;
+const MAX_SINGLE_TURN_CHARS = 8000;
+
 function isTransientOrCapacityError(error: unknown): boolean {
   if (!error) return false;
   const str = String(error);
@@ -63,29 +73,66 @@ function isTransientOrCapacityError(error: unknown): boolean {
   );
 }
 
+/**
+ * Prunes conversation history using a sliding window and character budget,
+ * then maps it to the schema expected by the Gemini API.
+ */
 function formatContents(prompt: string, history: HistoryItem[] = []) {
-  if (history.length === 0) {
+  if (!history || history.length === 0) {
     return prompt;
   }
 
+  // 1. Sliding Message Window: Keep only the most recent N turns
+  const recentHistory = history.slice(-MAX_HISTORY_MESSAGES);
+
+  // 2. Sliding Character Budget: Evaluate from newest to oldest
+  let accumulatedChars = prompt.length;
+  const prunedItems: Array<{ role: "user" | "model"; text: string }> = [];
+
+  for (let i = recentHistory.length - 1; i >= 0; i--) {
+    const item = recentHistory[i];
+    let text = "";
+
+    if (Array.isArray(item.parts) && item.parts.length > 0) {
+      text = item.parts.map((p) => p.text).join("\n");
+    } else {
+      text = item.content || "";
+    }
+
+    text = text.trim();
+    if (!text) continue;
+
+    // Truncate overly long single historical turns (e.g. huge code dumps)
+    if (text.length > MAX_SINGLE_TURN_CHARS) {
+      text = text.slice(0, MAX_SINGLE_TURN_CHARS) + "\n...[truncated older context]";
+    }
+
+    if (accumulatedChars + text.length > MAX_HISTORY_CHAR_BUDGET) {
+      break; // Budget reached, skip older messages
+    }
+
+    accumulatedChars += text.length;
+    const role: "user" | "model" =
+      item.role === "assistant" || item.role === "model" ? "model" : "user";
+
+    // Insert at front to maintain chronological order
+    prunedItems.unshift({ role, text });
+  }
+
+  // 3. Format into Gemini Content array
   const contents: Array<{
     role: "user" | "model";
     parts: Array<{ text: string }>;
   }> = [];
 
-  for (const msg of history) {
-    const role =
-      msg.role === "assistant" || msg.role === "model" ? "model" : "user";
-    if (Array.isArray(msg.parts) && msg.parts.length > 0) {
-      contents.push({ role, parts: msg.parts });
-    } else {
-      contents.push({
-        role,
-        parts: [{ text: msg.content || "" }],
-      });
-    }
+  for (const msg of prunedItems) {
+    contents.push({
+      role: msg.role,
+      parts: [{ text: msg.text }],
+    });
   }
 
+  // 4. Append the current user prompt
   contents.push({
     role: "user",
     parts: [{ text: prompt }],
