@@ -104,7 +104,8 @@ function formatContents(prompt: string, history: HistoryItem[] = []) {
 
     // Truncate overly long single historical turns (e.g. huge code dumps)
     if (text.length > MAX_SINGLE_TURN_CHARS) {
-      text = text.slice(0, MAX_SINGLE_TURN_CHARS) + "\n...[truncated older context]";
+      text =
+        text.slice(0, MAX_SINGLE_TURN_CHARS) + "\n...[truncated older context]";
     }
 
     if (accumulatedChars + text.length > MAX_HISTORY_CHAR_BUDGET) {

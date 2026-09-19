@@ -5,50 +5,6 @@ import {
 } from "../services/geminiService.js";
 import { DEFAULT_MODEL } from "../config/gemini.js";
 
-export async function askChat(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const { prompt, history, model } = req.body;
-
-    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
-      res.status(400).json({
-        success: false,
-        error: "A valid 'prompt' string is required.",
-      });
-      return;
-    }
-
-    const trimmedPrompt = prompt.trim();
-    if (trimmedPrompt.length > 10000) {
-      res.status(400).json({
-        success: false,
-        error: "Prompt exceeds maximum allowed length (10,000 characters).",
-      });
-      return;
-    }
-
-    const result = await generateChatResponse({
-      prompt: trimmedPrompt,
-      history: Array.isArray(history) ? history : [],
-      model: typeof model === "string" ? model : undefined,
-    });
-
-    res.json({
-      success: true,
-      answer: result.text,
-      model: result.model,
-      timestamp: result.timestamp,
-      tokens: result.tokens,
-      durationMs: result.durationMs,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
 export async function streamChat(req: Request, res: Response): Promise<void> {
   const { prompt, history, model } = req.body;
 
