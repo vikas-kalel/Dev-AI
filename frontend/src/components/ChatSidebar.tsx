@@ -349,34 +349,6 @@ export function ChatSidebar({
           ))
         )}
       </div>
-
-      {/* 5. Bottom Profile Footer */}
-      <div className="p-2.5 border-t border-zinc-200 bg-white/80 shrink-0">
-        <div className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center font-mono text-[11px] font-semibold shrink-0 shadow-xs">
-              DV
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-zinc-950 truncate leading-tight">
-                Developer
-              </div>
-              <div className="text-[10px] font-mono text-zinc-500 truncate leading-tight">
-                dev@devai.studio
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="p-1 text-zinc-400 hover:text-zinc-700 rounded transition-colors cursor-pointer"
-            title="Settings"
-          >
-            <span className="material-symbols-outlined text-[16px]">
-              settings
-            </span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 

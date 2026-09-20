@@ -134,7 +134,7 @@ export function ChatWorkspacePage() {
       />
 
       {/* Main Chat Pane */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden h-full relative">
+      <div className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden h-full">
         <ChatHeader
           currentTitle={
             activeConvData?.title ||
@@ -171,8 +171,8 @@ export function ChatWorkspacePage() {
           </div>
         )}
 
-        {/* Message List with bottom spacing for floating composer */}
-        <div className="flex-1 overflow-y-auto pb-48 sm:pb-44 w-full">
+        {/* Message List */}
+        <div className="flex-1 overflow-y-auto">
           <MessageList
             messages={messages}
             isLoading={isSending || isConvLoading}
@@ -180,7 +180,7 @@ export function ChatWorkspacePage() {
           />
         </div>
 
-        {/* Chat Input & File Attachment Floating Dock */}
+        {/* Chat Input & File Attachment */}
         <ChatInput
           onSend={handleSendMessage}
           onFileUpload={handleFileUpload}
@@ -188,7 +188,7 @@ export function ChatWorkspacePage() {
           showScrollBottom={false}
         />
 
-        {/* Properly aligned footer */}
+        {/* Minimal status footer */}
         <ChatFooter />
       </div>
     </div>
