@@ -291,9 +291,9 @@ export function ChatInput({
   return (
     <div
       id="composer-dock"
-      className="absolute inset-x-0 z-30 pointer-events-none bottom-8 sm:bottom-8"
+      className="absolute inset-x-0 z-30 pointer-events-none bottom-10 sm:bottom-10"
     >
-      <div className="max-w-3xl mx-auto px-2.5 sm:px-6 pointer-events-auto flex flex-col items-center">
+      <div className="w-full max-w-3xl mx-auto px-3.5 sm:px-6 pointer-events-auto flex flex-col items-center">
         {/* Scroll to bottom button: ONLY visible when generation is in progress AND user is scrolled up */}
         {showScrollBottom && onScrollBottom && (
           <div className="mb-2">

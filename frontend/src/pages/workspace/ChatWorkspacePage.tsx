@@ -13,6 +13,7 @@ import { MessageList } from "../../components/MessageList.js";
 import { ChatInput } from "../../components/ChatInput.js";
 import { ChatSidebar } from "../../components/ChatSidebar.js";
 import { ChatHeader } from "../../components/ChatHeader.js";
+import { ChatFooter } from "../../components/ChatFooter.js";
 import { useUIStore } from "../../stores/useUIStore.js";
 import type { ChatMessage, ChatSession } from "../../types/chat.js";
 
@@ -133,7 +134,7 @@ export function ChatWorkspacePage() {
       />
 
       {/* Main Chat Pane */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden h-full">
+      <div className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden h-full relative">
         <ChatHeader
           currentTitle={
             activeConvData?.title ||
@@ -170,8 +171,8 @@ export function ChatWorkspacePage() {
           </div>
         )}
 
-        {/* Message List */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Message List with bottom spacing for floating composer */}
+        <div className="flex-1 overflow-y-auto pb-48 sm:pb-44 w-full">
           <MessageList
             messages={messages}
             isLoading={isSending || isConvLoading}
@@ -179,13 +180,16 @@ export function ChatWorkspacePage() {
           />
         </div>
 
-        {/* Chat Input & File Attachment */}
+        {/* Chat Input & File Attachment Floating Dock */}
         <ChatInput
           onSend={handleSendMessage}
           onFileUpload={handleFileUpload}
           isLoading={isSending || isUploading}
           showScrollBottom={false}
         />
+
+        {/* Properly aligned footer */}
+        <ChatFooter />
       </div>
     </div>
   );

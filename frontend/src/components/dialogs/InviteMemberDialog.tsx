@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
-import { useUIStore } from "../../stores/useUIStore";
-import { useAddMember } from "../../hooks/useMembers";
+import React, { useState } from "react";
+import { useUIStore } from "../../stores/useUIStore.js";
+import { useAddMember } from "../../hooks/useMembers.js";
 
 export function InviteMemberDialog() {
   const { activeDialog, dialogData, closeDialog } = useUIStore();
@@ -14,8 +14,6 @@ export function InviteMemberDialog() {
     return null;
   }
 
-  const projectId = String(dialogData.projectId);
-
   const handleClose = () => {
     setEmail("");
     setInviteLink(null);
@@ -23,20 +21,20 @@ export function InviteMemberDialog() {
     closeDialog();
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
 
     addMember(
       {
-        projectId,
+        projectId: dialogData.projectId,
         email: email.trim(),
         role,
       },
       {
-        onSuccess: (res) => {
-          if (res?.type === "INVITATION" && res?.data?.rawToken) {
-            const link = `${window.location.origin}/invite/${res.data.rawToken}`;
+        onSuccess: (data: any) => {
+          if (data?.type === "INVITATION" && data?.data?.rawToken) {
+            const link = `${window.location.origin}/invite/${data.data.rawToken}`;
             setInviteLink(link);
           } else {
             handleClose();
@@ -87,7 +85,8 @@ export function InviteMemberDialog() {
           <div className="space-y-4">
             <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
               <p className="text-xs text-zinc-600 mb-2">
-                An invitation for <strong>{email}</strong> was created. You can share this direct link:
+                An invitation for <strong>{email}</strong> was created. You can
+                share this direct link:
               </p>
               <div className="flex items-center gap-1.5 bg-white border border-zinc-200 rounded-lg p-1.5">
                 <input
@@ -114,7 +113,9 @@ export function InviteMemberDialog() {
                 info
               </span>
               <span>
-                If SMTP is not configured in <code>backend/.env</code>, emails are logged in development mode. You can copy the link above and send it directly.
+                If SMTP is not configured in <code>backend/.env</code>, emails
+                are logged in development mode. You can copy the link above and
+                send it directly.
               </span>
             </div>
 
