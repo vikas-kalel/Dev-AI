@@ -1,7 +1,10 @@
 import { Types } from "mongoose";
 import { InvitationModel, IInvitation } from "../models/Invitation.js";
 import { ProjectModel } from "../models/Project.js";
-import { ProjectMembershipModel, ProjectRole } from "../models/ProjectMembership.js";
+import {
+  ProjectMembershipModel,
+  ProjectRole,
+} from "../models/ProjectMembership.js";
 import { OrganizationMembershipModel } from "../models/OrganizationMembership.js";
 import { UserModel } from "../models/User.js";
 import { OutboxEventModel } from "../models/OutboxEvent.js";
@@ -16,7 +19,7 @@ export class InvitationService {
     projectId: string,
     email: string,
     invitedRole: ProjectRole,
-    actorUserId: string
+    actorUserId: string,
   ): Promise<{ invitation: IInvitation; rawToken: string }> {
     const normalizedEmail = email.toLowerCase().trim();
     const project = await ProjectModel.findById(projectId);
@@ -29,12 +32,14 @@ export class InvitationService {
     // Revoke any previous pending invitation for this email in this project
     await InvitationModel.updateMany(
       { projectId: project._id, email: normalizedEmail, status: "PENDING" },
-      { status: "REVOKED" }
+      { status: "REVOKED" },
     );
 
     const rawToken = generateRandomToken(32);
     const tokenHash = hashToken(rawToken);
-    const expiresAt = new Date(Date.now() + ENV.INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + ENV.INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    );
 
     const invitation = await InvitationModel.create({
       organizationId: new Types.ObjectId(orgId),
@@ -83,16 +88,30 @@ export class InvitationService {
       .lean();
 
     if (!invitation) {
-      throw new AppError("NOT_FOUND", "Invitation not found or invalid token.", 404);
+      throw new AppError(
+        "NOT_FOUND",
+        "Invitation not found or invalid token.",
+        404,
+      );
     }
 
     if (invitation.status !== "PENDING") {
-      throw new AppError("INVALID_INVITATION", `This invitation has already been ${invitation.status.toLowerCase()}.`, 400);
+      throw new AppError(
+        "INVALID_INVITATION",
+        `This invitation has already been ${invitation.status.toLowerCase()}.`,
+        400,
+      );
     }
 
     if (new Date(invitation.expiresAt) < new Date()) {
-      await InvitationModel.findByIdAndUpdate(invitation._id, { status: "EXPIRED" });
-      throw new AppError("EXPIRED_INVITATION", "This invitation has expired. Ask an administrator for a new invite.", 400);
+      await InvitationModel.findByIdAndUpdate(invitation._id, {
+        status: "EXPIRED",
+      });
+      throw new AppError(
+        "EXPIRED_INVITATION",
+        "This invitation has expired. Ask an administrator for a new invite.",
+        400,
+      );
     }
 
     return invitation;
@@ -103,17 +122,29 @@ export class InvitationService {
     const invitation = await InvitationModel.findOne({ tokenHash });
 
     if (!invitation) {
-      throw new AppError("NOT_FOUND", "Invitation not found or invalid token.", 404);
+      throw new AppError(
+        "NOT_FOUND",
+        "Invitation not found or invalid token.",
+        404,
+      );
     }
 
     if (invitation.status !== "PENDING") {
-      throw new AppError("INVALID_INVITATION", `This invitation is ${invitation.status.toLowerCase()}.`, 400);
+      throw new AppError(
+        "INVALID_INVITATION",
+        `This invitation is ${invitation.status.toLowerCase()}.`,
+        400,
+      );
     }
 
     if (invitation.expiresAt < new Date()) {
       invitation.status = "EXPIRED";
       await invitation.save();
-      throw new AppError("EXPIRED_INVITATION", "This invitation has expired.", 400);
+      throw new AppError(
+        "EXPIRED_INVITATION",
+        "This invitation has expired.",
+        400,
+      );
     }
 
     const uId = new Types.ObjectId(userId);
@@ -176,7 +207,10 @@ export class InvitationService {
     return projectMembership;
   }
 
-  async resendInvitation(invitationId: string, actorUserId: string): Promise<string> {
+  async resendInvitation(
+    invitationId: string,
+    actorUserId: string,
+  ): Promise<string> {
     const invitation = await InvitationModel.findById(invitationId);
     if (!invitation) {
       throw new AppError("NOT_FOUND", "Invitation not found.", 404);
@@ -188,7 +222,9 @@ export class InvitationService {
     const rawToken = generateRandomToken(32);
     invitation.tokenHash = hashToken(rawToken);
     invitation.status = "PENDING";
-    invitation.expiresAt = new Date(Date.now() + ENV.INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+    invitation.expiresAt = new Date(
+      Date.now() + ENV.INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    );
     await invitation.save();
 
     await OutboxEventModel.create({
@@ -208,7 +244,10 @@ export class InvitationService {
     return rawToken;
   }
 
-  async revokeInvitation(invitationId: string, actorUserId: string): Promise<void> {
+  async revokeInvitation(
+    invitationId: string,
+    actorUserId: string,
+  ): Promise<void> {
     const invitation = await InvitationModel.findById(invitationId);
     if (!invitation) {
       throw new AppError("NOT_FOUND", "Invitation not found.", 404);

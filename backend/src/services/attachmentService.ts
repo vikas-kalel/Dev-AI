@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
 import { Types } from "mongoose";
-import { ConversationAttachmentModel, IConversationAttachment } from "../models/ConversationAttachment.js";
+import {
+  ConversationAttachmentModel,
+  IConversationAttachment,
+} from "../models/ConversationAttachment.js";
 import { ConversationModel } from "../models/Conversation.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { ENV } from "../config/env.js";
@@ -39,7 +42,7 @@ export class AttachmentService {
   async saveAttachment(
     conversationId: string,
     userId: string,
-    file: Express.Multer.File
+    file: Express.Multer.File,
   ): Promise<IConversationAttachment> {
     const conversation = await ConversationModel.findById(conversationId);
     if (!conversation) {
@@ -55,7 +58,7 @@ export class AttachmentService {
       throw new AppError(
         "INVALID_FILE_TYPE",
         `Unsupported file type "${ext}". Supported types: text, code, json, yaml, csv, markdown, pdf.`,
-        400
+        400,
       );
     }
 
@@ -94,7 +97,11 @@ export class AttachmentService {
     }
 
     if (attachment.uploadedBy.toString() !== userId) {
-      throw new AppError("FORBIDDEN", "You can only delete files you uploaded.", 403);
+      throw new AppError(
+        "FORBIDDEN",
+        "You can only delete files you uploaded.",
+        403,
+      );
     }
 
     // Delete file from disk if present
@@ -103,7 +110,10 @@ export class AttachmentService {
       try {
         await fs.promises.unlink(filePath);
       } catch (err) {
-        console.warn("[AttachmentService] Could not remove physical file:", err);
+        console.warn(
+          "[AttachmentService] Could not remove physical file:",
+          err,
+        );
       }
     }
 

@@ -9,7 +9,7 @@ import { AppError } from "../middleware/errorHandler.js";
  */
 export async function assertNotLastMaintainer(
   projectId: string | Types.ObjectId,
-  targetUserId: string | Types.ObjectId
+  targetUserId: string | Types.ObjectId,
 ): Promise<void> {
   const pId = new Types.ObjectId(projectId);
   const uId = new Types.ObjectId(targetUserId);
@@ -20,13 +20,15 @@ export async function assertNotLastMaintainer(
     status: "ACTIVE",
   });
 
-  const isTargetMaintainer = activeMaintainers.some((m) => m.userId.equals(uId));
+  const isTargetMaintainer = activeMaintainers.some((m) =>
+    m.userId.equals(uId),
+  );
 
   if (isTargetMaintainer && activeMaintainers.length <= 1) {
     throw new AppError(
       "LAST_MAINTAINER",
       "This project must retain at least one Maintainer. Assign another Maintainer first.",
-      400
+      400,
     );
   }
 }
@@ -37,7 +39,7 @@ export async function assertNotLastMaintainer(
  */
 export async function assertNotLastAdmin(
   organizationId: string | Types.ObjectId,
-  targetUserId: string | Types.ObjectId
+  targetUserId: string | Types.ObjectId,
 ): Promise<void> {
   const oId = new Types.ObjectId(organizationId);
   const uId = new Types.ObjectId(targetUserId);
@@ -54,7 +56,7 @@ export async function assertNotLastAdmin(
     throw new AppError(
       "LAST_ADMIN",
       "This organization must retain at least one Admin. Assign another Admin first.",
-      400
+      400,
     );
   }
 }

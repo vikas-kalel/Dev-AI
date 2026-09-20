@@ -10,11 +10,15 @@ export class ConversationService {
   async createConversation(
     projectId: string,
     userId: string,
-    title?: string
+    title?: string,
   ): Promise<IConversation> {
     const project = await ProjectModel.findById(projectId);
     if (!project || project.status === "ARCHIVED") {
-      throw new AppError("BAD_REQUEST", "Cannot create conversations in an archived or non-existent project.", 400);
+      throw new AppError(
+        "BAD_REQUEST",
+        "Cannot create conversations in an archived or non-existent project.",
+        400,
+      );
     }
 
     const conversation = await ConversationModel.create({
@@ -28,7 +32,10 @@ export class ConversationService {
     return conversation;
   }
 
-  async listConversations(projectId: string, userId: string): Promise<IConversation[]> {
+  async listConversations(
+    projectId: string,
+    userId: string,
+  ): Promise<IConversation[]> {
     return ConversationModel.find({
       projectId: new Types.ObjectId(projectId),
       userId: new Types.ObjectId(userId),
@@ -39,18 +46,25 @@ export class ConversationService {
   }
 
   async getConversation(conversationId: string, userId: string): Promise<any> {
-    const conversation = await ConversationModel.findById(conversationId).lean();
+    const conversation =
+      await ConversationModel.findById(conversationId).lean();
     if (!conversation) {
       throw new AppError("NOT_FOUND", "Conversation not found.", 404);
     }
 
     // Verify ownership
     if (conversation.userId.toString() !== userId) {
-      throw new AppError("FORBIDDEN", "You do not have access to this conversation.", 403);
+      throw new AppError(
+        "FORBIDDEN",
+        "You do not have access to this conversation.",
+        403,
+      );
     }
 
     // Load messages
-    const messages = await MessageModel.find({ conversationId: conversation._id })
+    const messages = await MessageModel.find({
+      conversationId: conversation._id,
+    })
       .sort({ createdAt: 1 })
       .lean();
 
@@ -67,7 +81,10 @@ export class ConversationService {
     };
   }
 
-  async archiveConversation(conversationId: string, userId: string): Promise<void> {
+  async archiveConversation(
+    conversationId: string,
+    userId: string,
+  ): Promise<void> {
     const conversation = await ConversationModel.findOne({
       _id: new Types.ObjectId(conversationId),
       userId: new Types.ObjectId(userId),
@@ -84,7 +101,7 @@ export class ConversationService {
   async sendMessage(
     conversationId: string,
     userId: string,
-    content: string
+    content: string,
   ): Promise<{ userMessage: IMessage; assistantMessage: IMessage }> {
     const conversation = await ConversationModel.findById(conversationId);
     if (!conversation) {
@@ -92,12 +109,20 @@ export class ConversationService {
     }
 
     if (conversation.userId.toString() !== userId) {
-      throw new AppError("FORBIDDEN", "You do not have access to this conversation.", 403);
+      throw new AppError(
+        "FORBIDDEN",
+        "You do not have access to this conversation.",
+        403,
+      );
     }
 
     const project = await ProjectModel.findById(conversation.projectId);
     if (!project || project.status === "ARCHIVED") {
-      throw new AppError("BAD_REQUEST", "Cannot send messages in an archived project.", 400);
+      throw new AppError(
+        "BAD_REQUEST",
+        "Cannot send messages in an archived project.",
+        400,
+      );
     }
 
     // 1. Save USER message
@@ -110,7 +135,9 @@ export class ConversationService {
     });
 
     // If first message, update conversation title
-    const messageCount = await MessageModel.countDocuments({ conversationId: conversation._id });
+    const messageCount = await MessageModel.countDocuments({
+      conversationId: conversation._id,
+    });
     if (messageCount <= 1 || conversation.title === "New Conversation") {
       const generatedTitle = content.trim().slice(0, 36);
       conversation.title = generatedTitle;
@@ -119,7 +146,9 @@ export class ConversationService {
     await conversation.save();
 
     // 2. Fetch recent conversation history
-    const historyDocs = await MessageModel.find({ conversationId: conversation._id })
+    const historyDocs = await MessageModel.find({
+      conversationId: conversation._id,
+    })
       .sort({ createdAt: 1 })
       .limit(12)
       .lean();

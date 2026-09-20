@@ -1,3 +1,4 @@
+export type MessageRole = "user" | "assistant";
 export type MessageRole = "user" | "assistant" | "system";
 
 export type MessageStatus = "sending" | "streaming" | "sent" | "error";
@@ -24,6 +25,7 @@ export interface ChatMessage {
 }
 
 export interface ChatHistoryPayload {
+  role: "user" | "assistant";
   role: MessageRole;
   content: string;
 }
@@ -51,6 +53,8 @@ export interface AskApiResponse {
 export interface ApiHealthResponse {
   status: string;
   service: string;
+  geminiConfigured: boolean;
   uptime: number;
   timestamp: string;
+  model?: string;
 }

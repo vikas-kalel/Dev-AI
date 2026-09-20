@@ -1,6 +1,10 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
-export type AttachmentProcessingStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
+export type AttachmentProcessingStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "READY"
+  | "FAILED";
 
 export interface IConversationAttachment extends Document {
   _id: Types.ObjectId;
@@ -19,9 +23,18 @@ export interface IConversationAttachment extends Document {
 
 const ConversationAttachmentSchema = new Schema<IConversationAttachment>(
   {
-    organizationId: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
+    organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: "Organization",
+      required: true,
+    },
     projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true },
-    conversationId: { type: Schema.Types.ObjectId, ref: "Conversation", required: true, index: true },
+    conversationId: {
+      type: Schema.Types.ObjectId,
+      ref: "Conversation",
+      required: true,
+      index: true,
+    },
     uploadedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     fileName: { type: String, required: true },
     mimeType: { type: String, required: true },
@@ -37,13 +50,14 @@ const ConversationAttachmentSchema = new Schema<IConversationAttachment>(
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
-  }
+  },
 );
 
 ConversationAttachmentSchema.index({ conversationId: 1, createdAt: -1 });
 
-export const ConversationAttachmentModel = mongoose.model<IConversationAttachment>(
-  "ConversationAttachment",
-  ConversationAttachmentSchema,
-  "conversation_attachments"
-);
+export const ConversationAttachmentModel =
+  mongoose.model<IConversationAttachment>(
+    "ConversationAttachment",
+    ConversationAttachmentSchema,
+    "conversation_attachments",
+  );

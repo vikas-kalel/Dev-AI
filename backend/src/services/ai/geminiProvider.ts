@@ -18,7 +18,9 @@ export class GeminiProvider implements AIProvider {
       }
 
       if (input.attachmentSummaries && input.attachmentSummaries.length > 0) {
-        const files = input.attachmentSummaries.map((f) => f.fileName).join(", ");
+        const files = input.attachmentSummaries
+          .map((f) => f.fileName)
+          .join(", ");
         prompt = `[Attached Context Files: ${files}]\n${prompt}`;
       }
 
@@ -33,7 +35,10 @@ export class GeminiProvider implements AIProvider {
         outputTokens: result.tokens,
       };
     } catch (err) {
-      console.warn("[GeminiProvider] Failed to get response from Gemini API, falling back to mock:", err);
+      console.warn(
+        "[GeminiProvider] Failed to get response from Gemini API, falling back to mock:",
+        err,
+      );
       return this.fallbackMock.generateResponse(input);
     }
   }

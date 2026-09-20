@@ -1,6 +1,10 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
-export type UserStatus = "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED" | "DELETED";
+export type UserStatus =
+  | "PENDING_VERIFICATION"
+  | "ACTIVE"
+  | "SUSPENDED"
+  | "DELETED";
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
@@ -16,7 +20,14 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
     name: { type: String, required: true, trim: true },
     passwordHash: { type: String, required: true },
     status: {
@@ -30,7 +41,7 @@ const UserSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export const UserModel = mongoose.model<IUser>("User", UserSchema, "users");

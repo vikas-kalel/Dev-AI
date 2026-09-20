@@ -37,7 +37,7 @@ const OutboxEventSchema = new Schema<IOutboxEvent>(
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
-  }
+  },
 );
 
 OutboxEventSchema.index({ status: 1, nextAttemptAt: 1 });
@@ -46,5 +46,5 @@ OutboxEventSchema.index({ aggregateType: 1, aggregateId: 1 });
 export const OutboxEventModel = mongoose.model<IOutboxEvent>(
   "OutboxEvent",
   OutboxEventSchema,
-  "outbox_events"
+  "outbox_events",
 );

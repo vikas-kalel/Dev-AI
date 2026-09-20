@@ -86,7 +86,7 @@ export class EmailService {
     token: string,
     projectName: string,
     role: string,
-    inviterName: string
+    inviterName: string,
   ): Promise<void> {
     const link = `${ENV.APP_URL}/invite/${token}`;
     await this.sendEmail({
@@ -108,7 +108,7 @@ export class EmailService {
     email: string,
     projectName: string,
     newRole: string,
-    actorName: string
+    actorName: string,
   ): Promise<void> {
     await this.sendEmail({
       to: email,

@@ -15,13 +15,29 @@ export interface IOrganization extends Document {
 const OrganizationSchema = new Schema<IOrganization>(
   {
     name: { type: String, required: true, trim: true },
-    slug: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    status: { type: String, enum: ["ACTIVE", "ARCHIVED"], default: "ACTIVE", index: true },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "ARCHIVED"],
+      default: "ACTIVE",
+      index: true,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-export const OrganizationModel = mongoose.model<IOrganization>("Organization", OrganizationSchema, "organizations");
+export const OrganizationModel = mongoose.model<IOrganization>(
+  "Organization",
+  OrganizationSchema,
+  "organizations",
+);

@@ -19,14 +19,24 @@ const ProjectMembershipSchema = new Schema<IProjectMembership>(
   {
     projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    role: { type: String, enum: ["MAINTAINER", "DEVELOPER"], required: true, default: "DEVELOPER" },
-    status: { type: String, enum: ["ACTIVE", "SUSPENDED", "REMOVED"], required: true, default: "ACTIVE" },
+    role: {
+      type: String,
+      enum: ["MAINTAINER", "DEVELOPER"],
+      required: true,
+      default: "DEVELOPER",
+    },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "SUSPENDED", "REMOVED"],
+      required: true,
+      default: "ACTIVE",
+    },
     joinedAt: { type: Date, default: Date.now },
     version: { type: Number, default: 1 },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 ProjectMembershipSchema.index({ projectId: 1, userId: 1 }, { unique: true });
@@ -36,5 +46,5 @@ ProjectMembershipSchema.index({ userId: 1, status: 1 });
 export const ProjectMembershipModel = mongoose.model<IProjectMembership>(
   "ProjectMembership",
   ProjectMembershipSchema,
-  "project_memberships"
+  "project_memberships",
 );

@@ -1,6 +1,5 @@
 import { OutboxEventModel } from "../models/OutboxEvent.js";
 import { emailService } from "../services/emailService.js";
-import { logger } from "../config/logger.js";
 
 export class EmailWorker {
   private isRunning: boolean = false;
@@ -11,7 +10,7 @@ export class EmailWorker {
   start(): void {
     if (this.isRunning) return;
     this.isRunning = true;
-    logger.info("Email outbox worker started.");
+    console.log("[Outbox Worker] Email outbox worker started.");
     this.poll();
   }
 
@@ -21,7 +20,7 @@ export class EmailWorker {
       clearTimeout(this.timer);
       this.timer = null;
     }
-    logger.info("Email outbox worker stopped.");
+    console.log("[Outbox Worker] Email outbox worker stopped.");
   }
 
   private poll(): void {
@@ -29,7 +28,7 @@ export class EmailWorker {
 
     this.processPendingEvents()
       .catch((err) => {
-        logger.error("Error processing outbox events:", { error: err });
+        console.error("[Outbox Worker] Error processing events:", err);
       })
       .finally(() => {
         if (this.isRunning) {
@@ -92,7 +91,9 @@ export class EmailWorker {
             break;
 
           default:
-            logger.warn(`Unknown eventType in outbox: ${event.eventType}`);
+            console.warn(
+              `[Outbox Worker] Unknown eventType: ${event.eventType}`,
+            );
             break;
         }
 
@@ -100,10 +101,10 @@ export class EmailWorker {
         event.processedAt = new Date();
         await event.save();
       } catch (err: any) {
-        logger.error(`Failed to process outbox event ${event._id}:`, {
-          error: err?.message,
-          eventId: event._id,
-        });
+        console.error(
+          `[Outbox Worker] Failed to process event ${event._id}:`,
+          err,
+        );
         const backoffSeconds = Math.pow(2, event.attempts) * 5; // 10s, 20s, 40s...
         event.nextAttemptAt = new Date(Date.now() + backoffSeconds * 1000);
         event.lastError = err?.message || String(err);

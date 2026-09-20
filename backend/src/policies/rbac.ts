@@ -45,7 +45,7 @@ const ORG_ADMIN_PERMISSIONS: Set<Permission> = new Set([
 export function hasProjectPermission(
   projectRole: ProjectRole | null | undefined,
   orgRole: OrgRole | null | undefined,
-  permission: Permission
+  permission: Permission,
 ): boolean {
   if (orgRole === "ADMIN") {
     return true; // Org Admin has full authority across org projects
@@ -62,7 +62,10 @@ export function hasProjectPermission(
   return false;
 }
 
-export function hasOrgPermission(orgRole: OrgRole | null | undefined, permission: Permission): boolean {
+export function hasOrgPermission(
+  orgRole: OrgRole | null | undefined,
+  permission: Permission,
+): boolean {
   if (orgRole === "ADMIN") {
     return ORG_ADMIN_PERMISSIONS.has(permission);
   }

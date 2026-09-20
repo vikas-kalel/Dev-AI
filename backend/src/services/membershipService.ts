@@ -1,6 +1,10 @@
 import { Types } from "mongoose";
 import { ProjectModel } from "../models/Project.js";
-import { ProjectMembershipModel, IProjectMembership, ProjectRole } from "../models/ProjectMembership.js";
+import {
+  ProjectMembershipModel,
+  IProjectMembership,
+  ProjectRole,
+} from "../models/ProjectMembership.js";
 import { OrganizationMembershipModel } from "../models/OrganizationMembership.js";
 import { UserModel } from "../models/User.js";
 import { OutboxEventModel } from "../models/OutboxEvent.js";
@@ -36,7 +40,7 @@ export class MembershipService {
     projectId: string,
     email: string,
     role: ProjectRole,
-    actorUserId: string
+    actorUserId: string,
   ): Promise<{ type: "MEMBERSHIP" | "INVITATION"; data: any }> {
     const normalizedEmail = email.toLowerCase().trim();
     const project = await ProjectModel.findById(projectId);
@@ -54,7 +58,7 @@ export class MembershipService {
         projectId,
         normalizedEmail,
         role,
-        actorUserId
+        actorUserId,
       );
       return { type: "INVITATION", data: invite };
     }
@@ -66,7 +70,11 @@ export class MembershipService {
     });
 
     if (existingMembership && existingMembership.status === "ACTIVE") {
-      throw new AppError("CONFLICT", "User is already an active member of this project.", 409);
+      throw new AppError(
+        "CONFLICT",
+        "User is already an active member of this project.",
+        409,
+      );
     }
 
     // Ensure user has OrganizationMembership
@@ -129,7 +137,7 @@ export class MembershipService {
     projectId: string,
     targetUserId: string,
     newRole: ProjectRole,
-    actorUserId: string
+    actorUserId: string,
   ): Promise<IProjectMembership> {
     const project = await ProjectModel.findById(projectId);
     if (!project) {
@@ -143,7 +151,11 @@ export class MembershipService {
     });
 
     if (!membership) {
-      throw new AppError("NOT_FOUND", "User is not an active member of this project.", 404);
+      throw new AppError(
+        "NOT_FOUND",
+        "User is not an active member of this project.",
+        404,
+      );
     }
 
     if (membership.role === newRole) {
@@ -194,7 +206,7 @@ export class MembershipService {
   async removeMember(
     projectId: string,
     targetUserId: string,
-    actorUserId: string
+    actorUserId: string,
   ): Promise<void> {
     const project = await ProjectModel.findById(projectId);
     if (!project) {
@@ -208,7 +220,11 @@ export class MembershipService {
     });
 
     if (!membership) {
-      throw new AppError("NOT_FOUND", "User is not an active member of this project.", 404);
+      throw new AppError(
+        "NOT_FOUND",
+        "User is not an active member of this project.",
+        404,
+      );
     }
 
     // Invariant check: Cannot remove the last Maintainer!

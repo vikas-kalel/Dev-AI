@@ -20,10 +20,18 @@ export interface IInvitation extends Document {
 
 const InvitationSchema = new Schema<IInvitation>(
   {
-    organizationId: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
+    organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: "Organization",
+      required: true,
+    },
     projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true },
     email: { type: String, required: true, lowercase: true, trim: true },
-    invitedRole: { type: String, enum: ["MAINTAINER", "DEVELOPER"], required: true },
+    invitedRole: {
+      type: String,
+      enum: ["MAINTAINER", "DEVELOPER"],
+      required: true,
+    },
     tokenHash: { type: String, required: true, index: true },
     status: {
       type: String,
@@ -37,9 +45,13 @@ const InvitationSchema = new Schema<IInvitation>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 InvitationSchema.index({ projectId: 1, email: 1, status: 1 });
 
-export const InvitationModel = mongoose.model<IInvitation>("Invitation", InvitationSchema, "invitations");
+export const InvitationModel = mongoose.model<IInvitation>(
+  "Invitation",
+  InvitationSchema,
+  "invitations",
+);

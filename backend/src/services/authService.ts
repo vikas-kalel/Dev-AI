@@ -5,21 +5,39 @@ import { SessionModel, ISession } from "../models/Session.js";
 import { OrganizationMembershipModel } from "../models/OrganizationMembership.js";
 import { ProjectMembershipModel } from "../models/ProjectMembership.js";
 import { OutboxEventModel } from "../models/OutboxEvent.js";
-import { hashPassword, comparePassword, hashToken, generateRandomToken, signJWT } from "../config/security.js";
+import {
+  hashPassword,
+  comparePassword,
+  hashToken,
+  generateRandomToken,
+  signJWT,
+} from "../config/security.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { ENV } from "../config/env.js";
 
 export class AuthService {
-  async signup(name: string, email: string, password: string): Promise<{ user: IUser; verificationToken: string }> {
+  async signup(
+    name: string,
+    email: string,
+    password: string,
+  ): Promise<{ user: IUser; verificationToken: string }> {
     const normalizedEmail = email.toLowerCase().trim();
 
     const existingUser = await UserModel.findOne({ email: normalizedEmail });
     if (existingUser) {
-      throw new AppError("CONFLICT", "An account with this email already exists.", 409);
+      throw new AppError(
+        "CONFLICT",
+        "An account with this email already exists.",
+        409,
+      );
     }
 
     if (password.length < 8) {
-      throw new AppError("VALIDATION_ERROR", "Password must be at least 8 characters long.", 400);
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Password must be at least 8 characters long.",
+        400,
+      );
     }
 
     const passwordHash = await hashPassword(password);
@@ -34,7 +52,9 @@ export class AuthService {
     // Create verification token
     const rawToken = generateRandomToken(32);
     const tokenHash = hashToken(rawToken);
-    const expiresAt = new Date(Date.now() + ENV.VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + ENV.VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     const authToken = new AuthTokenModel({
       userId: user._id,
@@ -76,7 +96,11 @@ export class AuthService {
     });
 
     if (!authToken) {
-      throw new AppError("INVALID_TOKEN", "Verification token is invalid or has expired.", 400);
+      throw new AppError(
+        "INVALID_TOKEN",
+        "Verification token is invalid or has expired.",
+        400,
+      );
     }
 
     authToken.consumedAt = new Date();
@@ -91,7 +115,7 @@ export class AuthService {
 
   async login(
     email: string,
-    password: string
+    password: string,
   ): Promise<{ user: IUser; session: ISession; token: string }> {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await UserModel.findOne({ email: normalizedEmail });
@@ -100,7 +124,11 @@ export class AuthService {
     }
 
     if (user.status === "DELETED" || user.status === "SUSPENDED") {
-      throw new AppError("FORBIDDEN", "This account has been deactivated.", 403);
+      throw new AppError(
+        "FORBIDDEN",
+        "This account has been deactivated.",
+        403,
+      );
     }
 
     const isValid = await comparePassword(password, user.passwordHash);
@@ -111,7 +139,9 @@ export class AuthService {
     // Create server-side session
     const rawSessionToken = generateRandomToken(32);
     const sessionHash = hashToken(rawSessionToken);
-    const expiresAt = new Date(Date.now() + ENV.TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + ENV.TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     const session = new SessionModel({
       userId: user._id,
@@ -134,7 +164,9 @@ export class AuthService {
 
   async logout(sessionId?: string): Promise<void> {
     if (sessionId && Types.ObjectId.isValid(sessionId)) {
-      await SessionModel.findByIdAndUpdate(sessionId, { revokedAt: new Date() });
+      await SessionModel.findByIdAndUpdate(sessionId, {
+        revokedAt: new Date(),
+      });
     }
   }
 
@@ -148,7 +180,9 @@ export class AuthService {
 
     const rawToken = generateRandomToken(32);
     const tokenHash = hashToken(rawToken);
-    const expiresAt = new Date(Date.now() + ENV.PASSWORD_RESET_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + ENV.PASSWORD_RESET_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     await AuthTokenModel.create({
       userId: user._id,
@@ -169,7 +203,11 @@ export class AuthService {
     });
   }
 
-  async resetPassword(email: string, token: string, newPassword: string): Promise<void> {
+  async resetPassword(
+    email: string,
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await UserModel.findOne({ email: normalizedEmail });
     if (!user) {
@@ -177,7 +215,11 @@ export class AuthService {
     }
 
     if (newPassword.length < 8) {
-      throw new AppError("VALIDATION_ERROR", "Password must be at least 8 characters long.", 400);
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Password must be at least 8 characters long.",
+        400,
+      );
     }
 
     const tokenHash = hashToken(token);
@@ -190,7 +232,11 @@ export class AuthService {
     });
 
     if (!authToken) {
-      throw new AppError("INVALID_TOKEN", "Password reset token is invalid or has expired.", 400);
+      throw new AppError(
+        "INVALID_TOKEN",
+        "Password reset token is invalid or has expired.",
+        400,
+      );
     }
 
     authToken.consumedAt = new Date();
@@ -202,7 +248,7 @@ export class AuthService {
     // Invalidate all active sessions for security
     await SessionModel.updateMany(
       { userId: user._id, revokedAt: { $exists: false } },
-      { revokedAt: new Date() }
+      { revokedAt: new Date() },
     );
   }
 
@@ -236,7 +282,9 @@ export class AuthService {
       .lean();
 
     // Filter out any populated project that was null (e.g. archived or deleted)
-    const validProjects = projectMemberships.filter((pm) => pm.projectId != null);
+    const validProjects = projectMemberships.filter(
+      (pm) => pm.projectId != null,
+    );
 
     return {
       user,

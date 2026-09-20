@@ -1,7 +1,11 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export type KnowledgeSourceType = "GITHUB" | "JIRA" | "CONFLUENCE" | "MANUAL";
-export type KnowledgeSourceStatus = "CONNECTED" | "SYNCING" | "ERROR" | "DISCONNECTED";
+export type KnowledgeSourceStatus =
+  | "CONNECTED"
+  | "SYNCING"
+  | "ERROR"
+  | "DISCONNECTED";
 
 export interface IKnowledgeSource extends Document {
   _id: Types.ObjectId;
@@ -20,9 +24,17 @@ export interface IKnowledgeSource extends Document {
 
 const KnowledgeSourceSchema = new Schema<IKnowledgeSource>(
   {
-    organizationId: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
+    organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: "Organization",
+      required: true,
+    },
     projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true },
-    type: { type: String, enum: ["GITHUB", "JIRA", "CONFLUENCE", "MANUAL"], required: true },
+    type: {
+      type: String,
+      enum: ["GITHUB", "JIRA", "CONFLUENCE", "MANUAL"],
+      required: true,
+    },
     name: { type: String, required: true, trim: true },
     status: {
       type: String,
@@ -37,7 +49,7 @@ const KnowledgeSourceSchema = new Schema<IKnowledgeSource>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 KnowledgeSourceSchema.index({ projectId: 1, type: 1, status: 1 });
@@ -45,5 +57,5 @@ KnowledgeSourceSchema.index({ projectId: 1, type: 1, status: 1 });
 export const KnowledgeSourceModel = mongoose.model<IKnowledgeSource>(
   "KnowledgeSource",
   KnowledgeSourceSchema,
-  "knowledge_sources"
+  "knowledge_sources",
 );

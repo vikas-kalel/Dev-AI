@@ -1,5 +1,4 @@
 import type { Request, Response, NextFunction } from "express";
-import { logger } from "../config/logger.js";
 
 export class AppError extends Error {
   public readonly code: string;
@@ -68,11 +67,7 @@ export function errorHandler(
     return;
   }
 
-  logger.error("Unhandled error occurred in request handler", {
-    message: err?.message,
-    stack: err?.stack,
-    requestId,
-  });
+  console.error("[Unhandled Error]:", err);
 
   const statusCode = typeof err.statusCode === "number" ? err.statusCode : 500;
   const message = err.message || "An internal server error occurred.";
