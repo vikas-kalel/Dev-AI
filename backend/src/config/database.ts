@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { ENV } from "./env.js";
@@ -11,7 +13,7 @@ export async function connectDatabase(): Promise<string> {
     return mongoose.connection.host;
   }
 
-  // Attempt connection to configured MONGODB_URI
+  // Attempt connection to configured external MONGODB_URI
   try {
     logger.info(`Attempting connection to MongoDB at: ${ENV.MONGODB_URI}`);
     await mongoose.connect(ENV.MONGODB_URI, {
@@ -21,22 +23,37 @@ export async function connectDatabase(): Promise<string> {
     return ENV.MONGODB_URI;
   } catch (err) {
     logger.warn(
-      `Could not connect to external MongoDB: ${(err as Error).message}`,
+      `Could not connect to external MongoDB at ${ENV.MONGODB_URI}: ${(err as Error).message}`,
     );
-    logger.info("Starting embedded MongoMemoryServer for development...");
+    logger.info(
+      "Starting embedded MongoDB with disk persistence for local development...",
+    );
 
     try {
+      // Create persistent database directory on disk so data survives server restarts
+      const dbDir = path.resolve(process.cwd(), "data/db");
+      if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+      }
+
       memoryServer = await MongoMemoryServer.create({
         instance: {
           dbName: "devai",
+          dbPath: dbDir,
+          storageEngine: "wiredTiger",
         },
       });
+
       const memoryUri = memoryServer.getUri();
       await mongoose.connect(memoryUri);
-      logger.info(`Connected to embedded MongoMemoryServer at ${memoryUri}`);
+      logger.info(
+        `Connected to embedded persistent MongoDB at ${memoryUri} (disk storage: ${dbDir})`,
+      );
       return memoryUri;
     } catch (memErr) {
-      logger.error("Failed to start MongoMemoryServer:", { error: memErr });
+      logger.error("Failed to start embedded persistent MongoDB:", {
+        error: memErr,
+      });
       throw memErr;
     }
   }
