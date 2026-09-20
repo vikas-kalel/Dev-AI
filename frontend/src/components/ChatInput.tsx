@@ -4,10 +4,11 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   onStop?: () => void;
   onScrollBottom?: () => void;
-  showScrollBottom: boolean;
+  showScrollBottom?: boolean;
   isLoading: boolean;
   initialValue?: string;
-  onToast: (msg: string) => void;
+  onToast?: (msg: string) => void;
+  onFileUpload?: (file: File) => void;
 }
 
 const MAX_CHARS = 2048;
@@ -54,15 +55,17 @@ export function ChatInput({
   onSend,
   onStop,
   onScrollBottom,
-  showScrollBottom,
+  showScrollBottom = false,
   isLoading,
   initialValue = "",
-  onToast,
+  onToast = () => {},
+  onFileUpload,
 }: ChatInputProps) {
   const [text, setText] = useState(initialValue);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isVoiceEnabledRef = useRef(false);
   const baseTextRef = useRef(initialValue);
@@ -371,8 +374,36 @@ export function ChatInput({
                 )}
               </div>
 
-              {/* Right: Speech-to-Text, Stop & Generate */}
+              {/* Right: Attach, Speech-to-Text, Stop & Generate */}
               <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+                {onFileUpload && (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) {
+                          onFileUpload(f);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Attach file context"
+                      className="h-7 px-2.5 rounded-full text-xs font-medium border border-zinc-200 hover:border-zinc-300 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">
+                        attach_file
+                      </span>
+                      <span>Attach</span>
+                    </button>
+                  </>
+                )}
+
                 {/* Persistent voice input toggle button (Enable/Disable) */}
                 <button
                   id="speech-to-text-btn"

@@ -1,20 +1,34 @@
+import React from "react";
+
 interface ToastProps {
   message: string | null;
+  onClose?: () => void;
 }
 
-export function Toast({ message }: ToastProps) {
+export function Toast({ message, onClose }: ToastProps) {
+  if (!message) return null;
+
   return (
     <div
       id="toast"
       aria-live="polite"
-      className={`fixed top-16 right-6 z-50 transform transition-all duration-200 bg-zinc-900 text-white text-xs font-mono px-3 py-1.5 rounded shadow-lg flex items-center gap-1.5 ${
-        message
-          ? "opacity-100 translate-y-0 pointer-events-auto"
-          : "opacity-0 -translate-y-2 pointer-events-none"
-      }`}
+      className="bg-zinc-900 text-white text-xs font-mono px-3.5 py-2 rounded-xl shadow-lg flex items-center justify-between gap-2 border border-zinc-800 animate-in fade-in slide-in-from-bottom-2 duration-150"
     >
-      <span className="material-symbols-outlined text-[14px]">check</span>
-      <span>{message || ""}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="material-symbols-outlined text-[15px] text-emerald-400">
+          check_circle
+        </span>
+        <span>{message}</span>
+      </div>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-zinc-400 hover:text-white p-0.5 rounded cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[13px]">close</span>
+        </button>
+      )}
     </div>
   );
 }

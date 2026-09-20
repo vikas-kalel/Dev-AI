@@ -6,8 +6,8 @@ interface MessageListProps {
   messages: ChatMessage[];
   isLoading: boolean;
   onSelectPrompt: (prompt: string) => void;
-  onRetry: (message: ChatMessage) => void;
-  onToast: (msg: string) => void;
+  onRetry?: (message: ChatMessage) => void;
+  onToast?: (msg: string) => void;
   onStop?: () => void;
 }
 
@@ -15,22 +15,26 @@ const PROMPT_STARTERS = [
   {
     icon: "schema",
     title: "Summarize system architecture options",
-    prompt: "Summarize system architecture options for high-throughput AI services.",
+    prompt:
+      "Summarize system architecture options for high-throughput AI services.",
   },
   {
     icon: "memory",
     title: "Explain token window limitations",
-    prompt: "Explain token window limitations and self-attention computational complexity.",
+    prompt:
+      "Explain token window limitations and self-attention computational complexity.",
   },
   {
     icon: "code",
     title: "Draft an idiomatic SSE client",
-    prompt: "Draft an idiomatic API client interface for streaming server-sent events in TypeScript.",
+    prompt:
+      "Draft an idiomatic API client interface for streaming server-sent events in TypeScript.",
   },
   {
     icon: "tune",
     title: "Compare latency vs throughput trade-offs",
-    prompt: "Compare latency vs. throughput trade-offs in quantized vs FP16 model weights.",
+    prompt:
+      "Compare latency vs. throughput trade-offs in quantized vs FP16 model weights.",
   },
 ];
 
@@ -67,7 +71,8 @@ export function MessageList({
           Developer Workspace
         </h1>
         <p className="text-xs sm:text-sm text-zinc-500 max-w-md leading-relaxed px-2">
-          Minimalist, high-throughput language model environment for code generation and engineering architecture.
+          Minimalist, high-throughput language model environment for code
+          generation and engineering architecture.
         </p>
       </div>
 
@@ -76,12 +81,17 @@ export function MessageList({
         <div className="mb-8 sm:mb-12">
           <div className="flex items-center justify-between mb-3 px-1">
             <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[13px]">terminal</span>
+              <span className="material-symbols-outlined text-[13px]">
+                terminal
+              </span>
               Prompt Starters
             </span>
             <span className="text-xs text-zinc-400">Click to insert</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="prompt-deck">
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+            id="prompt-deck"
+          >
             {PROMPT_STARTERS.map((item, idx) => (
               <button
                 key={idx}
@@ -91,7 +101,9 @@ export function MessageList({
               >
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <div className="w-7 h-7 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0 text-zinc-500 group-hover:text-zinc-900 group-hover:bg-zinc-200 transition-colors">
-                    <span className="material-symbols-outlined text-[16px]">{item.icon}</span>
+                    <span className="material-symbols-outlined text-[16px]">
+                      {item.icon}
+                    </span>
                   </div>
                   <span className="text-xs text-zinc-700 group-hover:text-zinc-950 font-medium truncate">
                     {item.title}
@@ -120,14 +132,21 @@ export function MessageList({
 
         {/* Live Loading Indicator (shown only if no active streaming assistant message in transcript) */}
         {isLoading && !hasActiveStreamingMessage && (
-          <div className="flex items-start gap-2.5 sm:gap-3.5 pr-0 sm:pr-2" id="streaming-turn">
+          <div
+            className="flex items-start gap-2.5 sm:gap-3.5 pr-0 sm:pr-2"
+            id="streaming-turn"
+          >
             <div className="w-7 h-7 rounded-md bg-zinc-900 flex-shrink-0 flex items-center justify-center text-white text-[13px] font-mono font-semibold mt-0.5 shadow-xs">
-              <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
+              <span className="material-symbols-outlined text-[15px]">
+                auto_awesome
+              </span>
             </div>
             <div className="flex flex-col flex-1 min-w-0 space-y-2">
               <div className="flex items-center justify-between flex-wrap gap-1">
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                  <span className="text-xs font-semibold text-zinc-950">DevAI</span>
+                  <span className="text-xs font-semibold text-zinc-950">
+                    DevAI
+                  </span>
                   <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 font-medium">
                     Core
                   </span>

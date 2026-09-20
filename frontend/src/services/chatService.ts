@@ -1,8 +1,11 @@
+import { request } from "./api.js";
 import type {
-  AskApiResponse,
   ApiHealthResponse,
   ChatHistoryPayload,
-} from "../types/chat.ts";
+  ChatMessage,
+  ChatSession,
+  ChatAttachment,
+} from "../types/chat.js";
 
 export interface StreamCallbacks {
   onChunk: (text: string) => void;
@@ -87,7 +90,6 @@ export async function streamAssistantResponse(
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        // Keep unfinished trailing line in buffer
         buffer = lines.pop() || "";
 
         for (const line of lines) {
@@ -125,7 +127,7 @@ export async function streamAssistantResponse(
     }
   } catch (err: unknown) {
     if (signal?.aborted) {
-      return; // Handled cleanly by user abort
+      return;
     }
     const errorMsg =
       err instanceof Error
@@ -135,9 +137,158 @@ export async function streamAssistantResponse(
   }
 }
 
+export const chatService = {
+  async listConversations(projectId: string): Promise<ChatSession[]> {
+    const res = await request<{ success: boolean; conversations: any[] }>(
+      `/projects/${projectId}/conversations`,
+      { method: "GET" },
+    );
+    return (res.conversations || []).map((c) => ({
+      id: c._id,
+      title: c.title,
+      projectId: c.projectId,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      messages: [],
+    }));
+  },
+
+  async createConversation(
+    projectId: string,
+    title?: string,
+  ): Promise<ChatSession> {
+    const res = await request<{ success: boolean; conversation: any }>(
+      `/projects/${projectId}/conversations`,
+      {
+        method: "POST",
+        body: JSON.stringify({ title }),
+      },
+    );
+    const c = res.conversation;
+    return {
+      id: c._id,
+      title: c.title,
+      projectId: c.projectId,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      messages: [],
+    };
+  },
+
+  async getConversation(conversationId: string): Promise<ChatSession> {
+    const res = await request<{ success: boolean; conversation: any }>(
+      `/conversations/${conversationId}`,
+      { method: "GET" },
+    );
+    const c = res.conversation;
+    const messages: ChatMessage[] = (c.messages || []).map((m: any) => ({
+      id: m._id,
+      role: m.role.toLowerCase() as "user" | "assistant",
+      content: m.content,
+      timestamp: m.createdAt,
+      status: "sent",
+      model: m.model,
+      tokens: (m.inputTokens || 0) + (m.outputTokens || 0),
+    }));
+
+    const attachments: ChatAttachment[] = (c.attachments || []).map(
+      (a: any) => ({
+        id: a._id,
+        fileName: a.fileName,
+        mimeType: a.mimeType,
+        sizeBytes: a.sizeBytes,
+        processingStatus: a.processingStatus,
+        createdAt: a.createdAt,
+      }),
+    );
+
+    return {
+      id: c._id,
+      title: c.title,
+      projectId: c.projectId,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      messages,
+      attachments,
+    };
+  },
+
+  async sendMessage(
+    conversationId: string,
+    content: string,
+  ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
+    const res = await request<{
+      success: boolean;
+      userMessage: any;
+      assistantMessage: any;
+    }>(`/conversations/${conversationId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    });
+
+    const u = res.userMessage;
+    const a = res.assistantMessage;
+
+    return {
+      userMessage: {
+        id: u._id,
+        role: "user",
+        content: u.content,
+        timestamp: u.createdAt,
+        status: "sent",
+      },
+      assistantMessage: {
+        id: a._id,
+        role: "assistant",
+        content: a.content,
+        timestamp: a.createdAt,
+        status: "sent",
+        model: a.model,
+        tokens: (a.inputTokens || 0) + (a.outputTokens || 0),
+      },
+    };
+  },
+
+  async archiveConversation(conversationId: string): Promise<void> {
+    await request(`/conversations/${conversationId}/archive`, {
+      method: "POST",
+    });
+  },
+
+  async uploadAttachment(
+    conversationId: string,
+    file: File,
+  ): Promise<ChatAttachment> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await request<{ success: boolean; attachment: any }>(
+      `/conversations/${conversationId}/attachments`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    return res.attachment;
+  },
+
+  async removeAttachment(
+    conversationId: string,
+    attachmentId: string,
+  ): Promise<void> {
+    await request(
+      `/conversations/${conversationId}/attachments/${attachmentId}`,
+      {
+        method: "DELETE",
+      },
+    );
+  },
+};
+
 export async function checkServerHealth(): Promise<ApiHealthResponse | null> {
   try {
-    const response = await fetch("/api/health");
+    const response = await fetch("/health");
     if (!response.ok) return null;
     return await response.json();
   } catch {

@@ -1,51 +1,87 @@
 import type { Request, Response, NextFunction } from "express";
+import { logger } from "../config/logger.js";
 
-export interface CustomError extends Error {
-  status?: number;
-  statusCode?: number;
-  code?: number;
+export class AppError extends Error {
+  public readonly code: string;
+  public readonly statusCode: number;
+  public readonly details?: unknown;
+
+  constructor(
+    code: string,
+    message: string,
+    statusCode: number = 400,
+    details?: unknown,
+  ) {
+    super(message);
+    this.name = "AppError";
+    this.code = code;
+    this.statusCode = statusCode;
+    this.details = details;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
 }
 
 export function errorHandler(
-  err: CustomError,
+  err: any,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ): void {
-  console.error("API Error:", err);
+  const requestId = (_req as any).requestId || undefined;
 
-  let statusCode = err.status || err.statusCode || (typeof err.code === "number" ? err.code : 500);
-  let message = err.message || "An internal server error occurred.";
-
-  if (typeof message === "string") {
-    const jsonMatch = message.match(/\{[\s\S]*"error"[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.error) {
-          if (parsed.error.code && typeof parsed.error.code === "number") {
-            statusCode = parsed.error.code;
-          }
-          if (parsed.error.message) {
-            message = parsed.error.message;
-          }
-        }
-      } catch {
-        // Fall back to original message if parse fails
-      }
-    }
+  // Custom AppError
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({
+      error: {
+        code: err.code,
+        message: err.message,
+        details: err.details,
+      },
+      requestId,
+    });
+    return;
   }
 
-  if (statusCode === 503 || message.includes("high demand") || message.includes("UNAVAILABLE")) {
-    statusCode = 503;
-    message =
-      "The Gemini AI service is currently experiencing temporary high demand. Please try again in a few moments or click 'Retry Question'.";
+  // Zod Validation Error
+  if (err.name === "ZodError") {
+    res.status(400).json({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid request data",
+        details: err.errors,
+      },
+      requestId,
+    });
+    return;
   }
 
-  res.status(statusCode >= 100 && statusCode < 600 ? statusCode : 500).json({
-    success: false,
-    error: message,
-    statusCode,
+  // Mongoose Duplicate Key Error
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyPattern || {})[0] || "field";
+    res.status(409).json({
+      error: {
+        code: "CONFLICT",
+        message: `A record with this ${field} already exists.`,
+      },
+      requestId,
+    });
+    return;
+  }
+
+  logger.error("Unhandled error occurred in request handler", {
+    message: err?.message,
+    stack: err?.stack,
+    requestId,
+  });
+
+  const statusCode = typeof err.statusCode === "number" ? err.statusCode : 500;
+  const message = err.message || "An internal server error occurred.";
+
+  res.status(statusCode).json({
+    error: {
+      code: "INTERNAL_SERVER_ERROR",
+      message,
+    },
+    requestId,
   });
 }
-
