@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useUIStore } from "../../stores/useUIStore.js";
-import { useAddMember } from "../../hooks/useMembers.js";
+import { useState, type FormEvent } from "react";
+import { useUIStore } from "../../stores/useUIStore";
+import { useAddMember } from "../../hooks/useMembers";
 
 export function InviteMemberDialog() {
   const { activeDialog, dialogData, closeDialog } = useUIStore();
@@ -14,6 +14,8 @@ export function InviteMemberDialog() {
     return null;
   }
 
+  const projectId = String(dialogData.projectId);
+
   const handleClose = () => {
     setEmail("");
     setInviteLink(null);
@@ -21,20 +23,20 @@ export function InviteMemberDialog() {
     closeDialog();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
 
     addMember(
       {
-        projectId: dialogData.projectId,
+        projectId,
         email: email.trim(),
         role,
       },
       {
-        onSuccess: (data: any) => {
-          if (data?.type === "INVITATION" && data?.data?.rawToken) {
-            const link = `${window.location.origin}/invite/${data.data.rawToken}`;
+        onSuccess: (res) => {
+          if (res?.type === "INVITATION" && res?.data?.rawToken) {
+            const link = `${window.location.origin}/invite/${res.data.rawToken}`;
             setInviteLink(link);
           } else {
             handleClose();
