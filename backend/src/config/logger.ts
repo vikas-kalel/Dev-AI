@@ -51,7 +51,11 @@ export const logger = winston.createLogger({
 });
 
 // HTTP Request Logger Middleware
-export function httpLogger(req: Request, res: Response, next: NextFunction): void {
+export function httpLogger(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   const startTime = Date.now();
   const requestId = (req as any).requestId || "";
 

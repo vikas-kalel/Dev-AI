@@ -1,5 +1,6 @@
 import nodemailer, { Transporter } from "nodemailer";
 import { ENV } from "../config/env.js";
+import { logger } from "../config/logger.js";
 
 export interface SendEmailOptions {
   to: string;
@@ -29,6 +30,10 @@ export class EmailService {
 
   async sendEmail(options: SendEmailOptions): Promise<void> {
     if (!this.isConfigured || !this.transporter) {
+      logger.warn(
+        `[Email Dev Mode] No SMTP configured. Email to "${options.to}" suppressed. Link is available in terminal or UI dialog.`,
+        { to: options.to, subject: options.subject },
+      );
       console.log(`\n========================================`);
       console.log(`[Email Service (Dev Mode - No SMTP Configured)]`);
       console.log(`To: ${options.to}`);
