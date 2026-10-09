@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import { UserModel, IUser } from "../models/User.js";
+import { InvitationModel } from "../models/Invitation.js";
 import { AuthTokenModel } from "../models/AuthToken.js";
 import { SessionModel, ISession } from "../models/Session.js";
 import { OrganizationMembershipModel } from "../models/OrganizationMembership.js";
@@ -14,6 +15,8 @@ import {
 } from "../config/security.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { ENV } from "../config/env.js";
+import { logger } from "../config/logger.js";
+import { invitationService } from "./invitationService.js";
 
 export class AuthService {
   async signup(
@@ -48,6 +51,10 @@ export class AuthService {
       status: "PENDING_VERIFICATION",
     });
     await user.save();
+    logger.info("[AuthService] New user signed up", {
+      userId: user._id,
+      email: normalizedEmail,
+    });
 
     // Create verification token
     const rawToken = generateRandomToken(32);
@@ -110,6 +117,12 @@ export class AuthService {
     user.emailVerifiedAt = new Date();
     await user.save();
 
+    // Automatically accept any pending project invitations matching this user's email
+    await invitationService.acceptPendingInvitationsForUser(
+      user._id.toString(),
+      user.email,
+    );
+
     return user;
   }
 
@@ -136,6 +149,14 @@ export class AuthService {
       throw new AppError("UNAUTHORIZED", "Invalid email or password.", 401);
     }
 
+    // Auto-accept any pending invitations created while user was offline
+    if (user.status === "ACTIVE") {
+      await invitationService.acceptPendingInvitationsForUser(
+        user._id.toString(),
+        user.email,
+      );
+    }
+
     // Create server-side session
     const rawSessionToken = generateRandomToken(32);
     const sessionHash = hashToken(rawSessionToken);
@@ -159,6 +180,10 @@ export class AuthService {
       sessionId: session._id.toString(),
     });
 
+    logger.info("[AuthService] User logged in", {
+      userId: user._id,
+      sessionId: session._id,
+    });
     return { user, session, token };
   }
 
@@ -174,7 +199,37 @@ export class AuthService {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await UserModel.findOne({ email: normalizedEmail });
     if (!user || user.status === "DELETED") {
-      // Return cleanly to prevent email enumeration
+      // Check if user has an active pending invitation!
+      // Often, invited users forget they haven't set a password yet and click "Forgot Password"
+      const pendingInvite = await InvitationModel.findOne({
+        email: normalizedEmail,
+        status: "PENDING",
+        expiresAt: { $gt: new Date() },
+      }).populate("projectId", "name");
+
+      if (pendingInvite) {
+        const rawToken = generateRandomToken(32);
+        pendingInvite.tokenHash = hashToken(rawToken);
+        pendingInvite.expiresAt = new Date(
+          Date.now() + ENV.INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+        );
+        await pendingInvite.save();
+
+        const projectName = (pendingInvite.projectId as any)?.name || "Project";
+        await OutboxEventModel.create({
+          organizationId: pendingInvite.organizationId,
+          eventType: "INVITATION_SENT",
+          aggregateType: "INVITATION",
+          aggregateId: pendingInvite._id,
+          payload: {
+            email: normalizedEmail,
+            token: rawToken,
+            projectName,
+            role: pendingInvite.invitedRole,
+            inviterName: "DevAI Administrator",
+          },
+        });
+      }
       return;
     }
 
@@ -260,6 +315,14 @@ export class AuthService {
     const user = await UserModel.findById(userId);
     if (!user) {
       throw new AppError("NOT_FOUND", "User not found.", 404);
+    }
+
+    // Auto-accept any pending invitations before returning organization/project roster
+    if (user.status === "ACTIVE") {
+      await invitationService.acceptPendingInvitationsForUser(
+        user._id.toString(),
+        user.email,
+      );
     }
 
     // Load active organization memberships

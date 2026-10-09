@@ -9,7 +9,12 @@ interface MessageItemProps {
   onStop?: () => void;
 }
 
-export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemProps) {
+export function MessageItem({
+  message,
+  onRetry,
+  onToast,
+  onStop,
+}: MessageItemProps) {
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
 
@@ -43,13 +48,16 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
 
   if (isUser) {
     return (
-      <div id={`message-user-${message.id}`} className="flex flex-col items-end pl-4 sm:pl-10">
+      <div
+        id={`message-user-${message.id}`}
+        className="flex flex-col items-end pl-4 sm:pl-10"
+      >
         <div className="flex items-center gap-2 mb-1.5 mr-1 font-mono text-[11px] text-zinc-400">
           <span>You</span>
           <span>·</span>
           <span>{formattedTime}</span>
         </div>
-        <div className="bg-zinc-100 text-zinc-950 border border-zinc-200/80 rounded-2xl rounded-tr-sm px-3.5 sm:px-4 py-2.5 sm:py-3 max-w-full sm:max-w-xl text-sm leading-relaxed whitespace-pre-wrap break-words">
+        <div className="bg-zinc-100 text-zinc-950 border border-zinc-200/80 rounded-2xl rounded-tr-sm px-3.5 sm:px-4 py-2.5 sm:py-3 max-w-full sm:max-w-2xl lg:max-w-4xl text-sm leading-relaxed whitespace-pre-wrap break-words">
           {message.content}
         </div>
       </div>
@@ -58,10 +66,15 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
 
   // Assistant Turn
   return (
-    <div id={`message-assistant-${message.id}`} className="flex items-start gap-2.5 sm:gap-3.5 pr-0 sm:pr-2">
+    <div
+      id={`message-assistant-${message.id}`}
+      className="flex items-start gap-2.5 sm:gap-3.5 pr-0 sm:pr-2"
+    >
       {/* DevAI Squircle Avatar */}
       <div className="w-7 h-7 rounded-md bg-zinc-900 flex-shrink-0 flex items-center justify-center text-white text-[13px] font-mono font-semibold mt-0.5 shadow-xs">
-        <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
+        <span className="material-symbols-outlined text-[15px]">
+          auto_awesome
+        </span>
       </div>
 
       <div className="flex flex-col flex-1 min-w-0 space-y-2">
@@ -92,8 +105,12 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
                 </span>
               ) : (
                 <>
-                  {typeof message.tokens === "number" ? `${message.tokens.toLocaleString()} tokens · ` : ""}
-                  {message.durationMs ? `${(message.durationMs / 1000).toFixed(1)}s` : formattedTime}
+                  {typeof message.tokens === "number"
+                    ? `${message.tokens.toLocaleString()} tokens · `
+                    : ""}
+                  {message.durationMs
+                    ? `${(message.durationMs / 1000).toFixed(1)}s`
+                    : formattedTime}
                 </>
               )}
             </span>
@@ -104,7 +121,9 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
         {isError ? (
           <div className="border border-rose-200 bg-rose-50/50 rounded-xl p-3.5 sm:p-4 space-y-3 text-sm text-zinc-900 shadow-sm">
             <div className="flex items-center gap-2 text-rose-700 font-medium text-xs">
-              <span className="material-symbols-outlined text-[16px]">error_outline</span>
+              <span className="material-symbols-outlined text-[16px]">
+                error_outline
+              </span>
               <span>Inference encountered an error</span>
             </div>
             <p className="text-xs text-rose-600 font-mono leading-relaxed break-words">
@@ -116,7 +135,9 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
                 onClick={() => onRetry(message)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 text-white text-xs font-medium hover:bg-zinc-800 transition-all cursor-pointer shadow-xs"
               >
-                <span className="material-symbols-outlined text-[14px]">refresh</span>
+                <span className="material-symbols-outlined text-[14px]">
+                  refresh
+                </span>
                 <span>Retry Inference</span>
               </button>
             )}
@@ -137,7 +158,8 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
                   code({ className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || "");
                     const rawText = String(children);
-                    const isMultiline = rawText.includes("\n") || Boolean(match);
+                    const isMultiline =
+                      rawText.includes("\n") || Boolean(match);
 
                     if (!isMultiline) {
                       return (
@@ -162,10 +184,10 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
                               {lang === "typescript" || lang === "ts"
                                 ? "main.ts"
                                 : lang === "javascript" || lang === "js"
-                                ? "main.js"
-                                : lang === "python" || lang === "py"
-                                ? "script.py"
-                                : `${lang}`}
+                                  ? "main.js"
+                                  : lang === "python" || lang === "py"
+                                    ? "script.py"
+                                    : `${lang}`}
                             </span>
                             <span className="text-zinc-500 text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 flex-shrink-0">
                               {lang}
@@ -176,7 +198,9 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
                             onClick={() => handleCopyText(cleanCode)}
                             className="inline-flex items-center gap-1 hover:text-white transition-colors text-zinc-400 flex-shrink-0 ml-2 cursor-pointer"
                           >
-                            <span className="material-symbols-outlined text-[13px]">content_copy</span>
+                            <span className="material-symbols-outlined text-[13px]">
+                              content_copy
+                            </span>
                             <span>Copy code</span>
                           </button>
                         </div>
@@ -209,7 +233,9 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
               <span className="material-symbols-outlined text-[14px]">
                 {copied ? "check" : "content_copy"}
               </span>
-              <span className="font-mono text-[11px]">{copied ? "Copied" : "Copy"}</span>
+              <span className="font-mono text-[11px]">
+                {copied ? "Copied" : "Copy"}
+              </span>
             </button>
 
             {onRetry && (
@@ -219,7 +245,9 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
                 title="Regenerate turn"
                 className="h-6 px-2 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 text-xs flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[14px]">refresh</span>
+                <span className="material-symbols-outlined text-[14px]">
+                  refresh
+                </span>
                 <span className="font-mono text-[11px]">Retry</span>
               </button>
             )}
@@ -230,28 +258,40 @@ export function MessageItem({ message, onRetry, onToast, onStop }: MessageItemPr
               type="button"
               onClick={() => {
                 setFeedback(feedback === "up" ? null : "up");
-                onToast?.(feedback === "up" ? "Feedback reset" : "Marked as helpful");
+                onToast?.(
+                  feedback === "up" ? "Feedback reset" : "Marked as helpful",
+                );
               }}
               title="Helpful"
               className={`h-6 w-6 rounded hover:bg-zinc-100 flex items-center justify-center transition-colors cursor-pointer ${
-                feedback === "up" ? "text-zinc-900 bg-zinc-100" : "text-zinc-400 hover:text-zinc-800"
+                feedback === "up"
+                  ? "text-zinc-900 bg-zinc-100"
+                  : "text-zinc-400 hover:text-zinc-800"
               }`}
             >
-              <span className="material-symbols-outlined text-[15px]">thumb_up</span>
+              <span className="material-symbols-outlined text-[15px]">
+                thumb_up
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => {
                 setFeedback(feedback === "down" ? null : "down");
-                onToast?.(feedback === "down" ? "Feedback reset" : "Feedback noted");
+                onToast?.(
+                  feedback === "down" ? "Feedback reset" : "Feedback noted",
+                );
               }}
               title="Not helpful"
               className={`h-6 w-6 rounded hover:bg-zinc-100 flex items-center justify-center transition-colors cursor-pointer ${
-                feedback === "down" ? "text-rose-600 bg-rose-50" : "text-zinc-400 hover:text-zinc-800"
+                feedback === "down"
+                  ? "text-rose-600 bg-rose-50"
+                  : "text-zinc-400 hover:text-zinc-800"
               }`}
             >
-              <span className="material-symbols-outlined text-[15px]">thumb_down</span>
+              <span className="material-symbols-outlined text-[15px]">
+                thumb_down
+              </span>
             </button>
           </div>
         )}

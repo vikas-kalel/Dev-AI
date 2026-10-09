@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useUIStore } from "../../stores/useUIStore.js";
 import { useArchiveProject } from "../../hooks/useProjects.js";

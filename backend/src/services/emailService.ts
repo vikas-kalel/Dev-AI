@@ -14,7 +14,19 @@ export class EmailService {
   private isConfigured: boolean = false;
 
   constructor() {
-    if (ENV.SMTP_HOST && ENV.SMTP_USER) {
+    if (ENV.SMTP_SERVICE && ENV.SMTP_USER && ENV.SMTP_PASS) {
+      this.transporter = nodemailer.createTransport({
+        service: ENV.SMTP_SERVICE,
+        auth: {
+          user: ENV.SMTP_USER,
+          pass: ENV.SMTP_PASS,
+        },
+      });
+      this.isConfigured = true;
+      logger.info(
+        `[EmailService] Configured with service: ${ENV.SMTP_SERVICE}`,
+      );
+    } else if (ENV.SMTP_HOST && ENV.SMTP_USER) {
       this.transporter = nodemailer.createTransport({
         host: ENV.SMTP_HOST,
         port: ENV.SMTP_PORT,
@@ -25,21 +37,29 @@ export class EmailService {
         },
       });
       this.isConfigured = true;
+      logger.info(
+        `[EmailService] Configured with host: ${ENV.SMTP_HOST}:${ENV.SMTP_PORT}`,
+      );
+    } else {
+      logger.info(
+        "[EmailService] No SMTP credentials configured. Running in development email suppression mode.",
+      );
     }
   }
 
   async sendEmail(options: SendEmailOptions): Promise<void> {
     if (!this.isConfigured || !this.transporter) {
       logger.warn(
-        `[Email Dev Mode] No SMTP configured. Email to "${options.to}" suppressed. Link is available in terminal or UI dialog.`,
+        `[EmailService] No SMTP configured — email suppressed (dev mode)`,
         { to: options.to, subject: options.subject },
       );
-      console.log(`\n========================================`);
-      console.log(`[Email Service (Dev Mode - No SMTP Configured)]`);
-      console.log(`To: ${options.to}`);
-      console.log(`Subject: ${options.subject}`);
-      console.log(`Body:\n${options.text}`);
-      console.log(`========================================\n`);
+      logger.info(
+        `\n==================== [DEV EMAIL NOTIFICATION] ====================\n` +
+          `  To:      ${options.to}\n` +
+          `  Subject: ${options.subject}\n` +
+          `  Body:\n${options.text}\n` +
+          `===================================================================\n`,
+      );
       return;
     }
 

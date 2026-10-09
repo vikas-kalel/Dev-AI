@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useCurrentUser } from "../../hooks/useAuth.js";
 import { useAdminUsers } from "../../hooks/useAdminOverview.js";
 import { useProjectList } from "../../hooks/useProjects.js";

@@ -90,6 +90,7 @@ export async function streamAssistantResponse(
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
+        // Keep unfinished trailing line in buffer
         buffer = lines.pop() || "";
 
         for (const line of lines) {
@@ -127,7 +128,7 @@ export async function streamAssistantResponse(
     }
   } catch (err: unknown) {
     if (signal?.aborted) {
-      return;
+      return; // Handled cleanly by user abort
     }
     const errorMsg =
       err instanceof Error
@@ -288,10 +289,137 @@ export const chatService = {
 
 export async function checkServerHealth(): Promise<ApiHealthResponse | null> {
   try {
-    const response = await fetch("/health");
+    const response = await fetch("/api/health");
     if (!response.ok) return null;
     return await response.json();
   } catch {
     return null;
+  }
+}
+
+// ── Conversation SSE streaming ───────────────────────────────────────────────
+
+export interface ConversationStreamCallbacks {
+  onStart?: (userMessageId: string, assistantMessageId: string) => void;
+  onChunk: (text: string) => void;
+  onDone: (data: { conversationId: string }) => void;
+  onError: (error: string, partial: boolean, partialText?: string) => void;
+}
+
+export async function streamConversationMessage(
+  conversationId: string,
+  content: string,
+  callbacks: ConversationStreamCallbacks,
+  signal?: AbortSignal,
+): Promise<void> {
+  try {
+    const response = await fetch(
+      `/api/v1/conversations/${conversationId}/messages/stream`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ content }),
+        signal,
+      },
+    );
+
+    if (!response.ok) {
+      let errText = `Server error (${response.status})`;
+      try {
+        const json = await response.json();
+        if (json.error?.message) errText = json.error.message;
+        else if (json.error) errText = String(json.error);
+      } catch {
+        /* ignore */
+      }
+      callbacks.onError(errText, false);
+      return;
+    }
+
+    if (!response.body) {
+      callbacks.onError("No streaming response body received.", false);
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    const onAbort = (): void => {
+      try {
+        reader.cancel();
+      } catch {
+        /* ignore */
+      }
+    };
+    if (signal) {
+      if (signal.aborted) {
+        onAbort();
+        return;
+      }
+      signal.addEventListener("abort", onAbort, { once: true });
+    }
+
+    try {
+      while (true) {
+        if (signal?.aborted) {
+          await reader.cancel().catch(() => {
+            /* ignore */
+          });
+          break;
+        }
+
+        const { done, value } = await reader.read();
+        if (done || signal?.aborted) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (signal?.aborted) break;
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith("data: ")) continue;
+          const payloadStr = trimmed.slice(6).trim();
+          if (!payloadStr) continue;
+
+          try {
+            const data = JSON.parse(payloadStr) as Record<string, unknown>;
+
+            if (data["type"] === "start") {
+              callbacks.onStart?.(
+                data["userMessageId"] as string,
+                data["assistantMessageId"] as string,
+              );
+            } else if (
+              data["type"] === "chunk" &&
+              typeof data["text"] === "string"
+            ) {
+              callbacks.onChunk(data["text"]);
+            } else if (data["type"] === "done") {
+              callbacks.onDone({
+                conversationId: data["conversationId"] as string,
+              });
+            } else if (data["type"] === "error") {
+              callbacks.onError(
+                (data["error"] as string) || "Streaming error occurred.",
+                !!data["partial"],
+                data["partialText"] as string | undefined,
+              );
+            }
+          } catch {
+            /* ignore malformed SSE line */
+          }
+        }
+      }
+    } finally {
+      if (signal) signal.removeEventListener("abort", onAbort);
+    }
+  } catch (err: unknown) {
+    if (signal?.aborted) return;
+    const msg =
+      err instanceof Error ? err.message : "Failed to connect to server.";
+    callbacks.onError(msg, false);
   }
 }

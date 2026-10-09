@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCurrentUser, useLogout } from "../hooks/useAuth.js";
 import { useUIStore } from "../stores/useUIStore.js";
@@ -12,7 +11,7 @@ interface TopBarProps {
 export function TopBar({ currentRole, projectName, orgName }: TopBarProps) {
   const { data: meData } = useCurrentUser();
   const { mutate: logout } = useLogout();
-  const { toggleMobileSidebar } = useUIStore();
+  const { isNavSidebarOpen, toggleNavSidebar } = useUIStore();
   const navigate = useNavigate();
 
   const user = meData?.user;
@@ -33,15 +32,20 @@ export function TopBar({ currentRole, projectName, orgName }: TopBarProps) {
 
   return (
     <header className="h-14 shrink-0 bg-white/95 backdrop-blur-md border-b border-zinc-200/90 flex items-center justify-between px-3.5 sm:px-6 sticky top-0 z-30 select-none">
-      {/* Left: Mobile hamburger + Context Breadcrumbs */}
+      {/* Left: Navigation toggle + Context Breadcrumbs */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
-          aria-label="Open sidebar"
-          onClick={toggleMobileSidebar}
-          className="md:hidden p-1.5 -ml-1 text-zinc-600 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
+          aria-label={
+            isNavSidebarOpen ? "Collapse navigation" : "Expand navigation"
+          }
+          title={isNavSidebarOpen ? "Collapse navigation" : "Expand navigation"}
+          onClick={toggleNavSidebar}
+          className="p-1.5 -ml-1 text-zinc-600 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer flex items-center"
         >
-          <span className="material-symbols-outlined text-[20px]">menu</span>
+          <span className="material-symbols-outlined text-[20px]">
+            {isNavSidebarOpen ? "menu_open" : "menu"}
+          </span>
         </button>
 
         <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-zinc-900 min-w-0">

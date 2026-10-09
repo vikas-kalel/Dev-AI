@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { useCurrentUser } from "../../hooks/useAuth.js";
 import { useProjectList } from "../../hooks/useProjects.js";

@@ -99,6 +99,7 @@ v1Router.delete(
 
 // --- Invitation Routes ---
 v1Router.get("/invitations/:token", inviteCtrl.getInvitation);
+v1Router.post("/invitations/:token/accept-signup", inviteCtrl.acceptAndSignup);
 v1Router.post(
   "/invitations/:token/accept",
   requireAuth,
@@ -132,6 +133,11 @@ v1Router.get(
   "/conversations/:conversationId",
   requireAuth,
   convCtrl.getConversation,
+);
+v1Router.post(
+  "/conversations/:conversationId/messages/stream",
+  requireAuth,
+  convCtrl.streamMessage,
 );
 v1Router.post(
   "/conversations/:conversationId/messages",

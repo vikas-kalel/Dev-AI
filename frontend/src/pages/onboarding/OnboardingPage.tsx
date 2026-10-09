@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { organizationService } from "../../services/organizationService.js";
 import { useUIStore } from "../../stores/useUIStore.js";
+import { useCurrentUser } from "../../hooks/useAuth.js";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function OnboardingPage() {
@@ -10,9 +11,16 @@ export function OnboardingPage() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { data: meData } = useCurrentUser();
   const { showToast } = useUIStore();
   const navigate = useNavigate();
   const qc = useQueryClient();
+
+  useEffect(() => {
+    if (meData?.organizations && meData.organizations.length > 0) {
+      navigate("/projects", { replace: true });
+    }
+  }, [meData, navigate]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

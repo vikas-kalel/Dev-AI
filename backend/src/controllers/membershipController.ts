@@ -9,8 +9,9 @@ export async function listMembers(
 ): Promise<void> {
   try {
     const projectId = req.params.projectId;
-    const members = await membershipService.listMembers(projectId);
-    res.status(200).json({ success: true, members });
+    const { members, invitations } =
+      await membershipService.listMembers(projectId);
+    res.status(200).json({ success: true, members, invitations });
   } catch (err) {
     next(err);
   }
@@ -25,14 +26,12 @@ export async function addMember(
     const projectId = req.params.projectId;
     const { email, role } = req.body;
     if (!email || !role) {
-      res
-        .status(400)
-        .json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Email and role are required.",
-          },
-        });
+      res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email and role are required.",
+        },
+      });
       return;
     }
 
@@ -57,14 +56,12 @@ export async function changeRole(
     const { projectId, userId } = req.params;
     const { role } = req.body;
     if (!role || (role !== "MAINTAINER" && role !== "DEVELOPER")) {
-      res
-        .status(400)
-        .json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Role must be MAINTAINER or DEVELOPER.",
-          },
-        });
+      res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Role must be MAINTAINER or DEVELOPER.",
+        },
+      });
       return;
     }
 
@@ -74,13 +71,11 @@ export async function changeRole(
       role as ProjectRole,
       req.userId!,
     );
-    res
-      .status(200)
-      .json({
-        success: true,
-        membership: updated,
-        message: `Role updated to ${role}.`,
-      });
+    res.status(200).json({
+      success: true,
+      membership: updated,
+      message: `Role updated to ${role}.`,
+    });
   } catch (err) {
     next(err);
   }

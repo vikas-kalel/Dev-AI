@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useSignup } from "../../hooks/useAuth.js";
 
 export function SignupPage() {
@@ -9,9 +9,8 @@ export function SignupPage() {
   const [verificationSent, setVerificationSent] = useState(false);
   const [devToken, setDevToken] = useState<string | null>(null);
   const { mutate: signup, isPending } = useSignup();
-  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) return;
 

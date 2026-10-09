@@ -58,7 +58,7 @@ export function MessageList({
     messages[messages.length - 1]?.status === "streaming";
 
   return (
-    <div className="max-w-3xl mx-auto px-3.5 sm:px-6 pt-4 pb-2 sm:pt-6 sm:pb-3 flex flex-col">
+    <div className="w-full px-4 sm:px-6 pt-4 pb-2 sm:pt-6 sm:pb-3 flex flex-col">
       {/* Session Header / Empty State Starter */}
       <div className="flex flex-col items-center mb-8 sm:mb-10 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100/80 border border-zinc-200 mb-3 shadow-xs">
@@ -89,7 +89,7 @@ export function MessageList({
             <span className="text-xs text-zinc-400">Click to insert</span>
           </div>
           <div
-            className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5"
             id="prompt-deck"
           >
             {PROMPT_STARTERS.map((item, idx) => (

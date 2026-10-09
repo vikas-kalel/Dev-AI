@@ -8,13 +8,24 @@ import { auditService } from "./auditService.js";
 import { AppError } from "../middleware/errorHandler.js";
 
 export class OrganizationService {
-  async createOrganization(name: string, slug: string, userId: string): Promise<IOrganization> {
-    const cleanSlug = slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, "-");
+  async createOrganization(
+    name: string,
+    slug: string,
+    userId: string,
+  ): Promise<IOrganization> {
+    const cleanSlug = slug
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9-]/g, "-");
     const uId = new Types.ObjectId(userId);
 
     const existing = await OrganizationModel.findOne({ slug: cleanSlug });
     if (existing) {
-      throw new AppError("CONFLICT", "An organization with this slug already exists.", 409);
+      throw new AppError(
+        "CONFLICT",
+        "An organization with this slug already exists.",
+        409,
+      );
     }
 
     const session = await mongoose.startSession();
@@ -30,7 +41,7 @@ export class OrganizationService {
               status: "ACTIVE",
             },
           ],
-          { session }
+          { session },
         );
 
         await OrganizationMembershipModel.create(
@@ -42,7 +53,7 @@ export class OrganizationService {
               status: "ACTIVE",
             },
           ],
-          { session }
+          { session },
         );
 
         createdOrg = org;
@@ -63,7 +74,8 @@ export class OrganizationService {
 
       return createdOrg;
     } catch (err: any) {
-      const errMsg = (err?.message || "") + " " + (err?.errorResponse?.errmsg || "");
+      const errMsg =
+        (err?.message || "") + " " + (err?.errorResponse?.errmsg || "");
       if (
         errMsg.includes("Transaction numbers are only allowed") ||
         errMsg.includes("does not support retryable writes") ||
@@ -112,7 +124,10 @@ export class OrganizationService {
     const oId = new Types.ObjectId(orgId);
 
     // 1. Projects in org
-    const projects = await ProjectModel.find({ organizationId: oId, status: "ACTIVE" }).lean();
+    const projects = await ProjectModel.find({
+      organizationId: oId,
+      status: "ACTIVE",
+    }).lean();
     const projectIds = projects.map((p) => p._id);
 
     // 2. Project Memberships
@@ -139,14 +154,24 @@ export class OrganizationService {
     orgMemberships.forEach((m) => uniqueUserIds.add(m.userId.toString()));
     projectMemberships.forEach((m) => uniqueUserIds.add(m.userId.toString()));
 
-    const maintainersCount = projectMemberships.filter((m) => m.role === "MAINTAINER").length;
-    const developersCount = projectMemberships.filter((m) => m.role === "DEVELOPER").length;
+    const maintainersCount = projectMemberships.filter(
+      (m) => m.role === "MAINTAINER",
+    ).length;
+    const developersCount = projectMemberships.filter(
+      (m) => m.role === "DEVELOPER",
+    ).length;
 
     // Project breakdown table
     const projectBreakdown = projects.map((project) => {
-      const pMembers = projectMemberships.filter((m) => m.projectId.toString() === project._id.toString());
-      const pInvites = pendingInvitations.filter((i) => i.projectId.toString() === project._id.toString());
-      const pMaintainers = pMembers.filter((m) => m.role === "MAINTAINER").length;
+      const pMembers = projectMemberships.filter(
+        (m) => m.projectId.toString() === project._id.toString(),
+      );
+      const pInvites = pendingInvitations.filter(
+        (i) => i.projectId.toString() === project._id.toString(),
+      );
+      const pMaintainers = pMembers.filter(
+        (m) => m.role === "MAINTAINER",
+      ).length;
       const pDevelopers = pMembers.filter((m) => m.role === "DEVELOPER").length;
 
       return {
@@ -162,7 +187,11 @@ export class OrganizationService {
     });
 
     // Recent activity
-    const recentActivity = await auditService.getRecentActivity(orgId, undefined, 10);
+    const recentActivity = await auditService.getRecentActivity(
+      orgId,
+      undefined,
+      10,
+    );
 
     return {
       metrics: {
@@ -180,17 +209,23 @@ export class OrganizationService {
 
   async getUsers(
     orgId: string,
-    filters: { projectId?: string; role?: string; status?: string; search?: string } = {}
+    filters: {
+      projectId?: string;
+      role?: string;
+      status?: string;
+      search?: string;
+    } = {},
   ): Promise<any[]> {
     const oId = new Types.ObjectId(orgId);
 
     // Get all org projects
     const projects = await ProjectModel.find({ organizationId: oId }).lean();
-    const projectMap = new Map(projects.map((p) => [p._id.toString(), p]));
 
     let targetProjectIds = projects.map((p) => p._id);
     if (filters.projectId && Types.ObjectId.isValid(filters.projectId)) {
-      targetProjectIds = targetProjectIds.filter((id) => id.toString() === filters.projectId);
+      targetProjectIds = targetProjectIds.filter(
+        (id) => id.toString() === filters.projectId,
+      );
     }
 
     const membershipQuery: any = {
@@ -224,7 +259,7 @@ export class OrganizationService {
         (r) =>
           r.user?.name?.toLowerCase().includes(q) ||
           r.user?.email?.toLowerCase().includes(q) ||
-          r.project?.name?.toLowerCase().includes(q)
+          r.project?.name?.toLowerCase().includes(q),
       );
     }
 

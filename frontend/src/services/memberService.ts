@@ -2,15 +2,18 @@ import { request } from "./api.js";
 import { ProjectMember, ProjectRole } from "../types/member.js";
 
 export const memberService = {
-  async listMembers(
-    projectId: string,
-  ): Promise<{ success: boolean; members: ProjectMember[] }> {
-    return request<{ success: boolean; members: ProjectMember[] }>(
-      `/projects/${projectId}/members`,
-      {
-        method: "GET",
-      },
-    );
+  async listMembers(projectId: string): Promise<{
+    success: boolean;
+    members: ProjectMember[];
+    invitations?: any[];
+  }> {
+    return request<{
+      success: boolean;
+      members: ProjectMember[];
+      invitations?: any[];
+    }>(`/projects/${projectId}/members`, {
+      method: "GET",
+    });
   },
 
   async addMember(
@@ -80,10 +83,35 @@ export const memberService = {
     );
   },
 
+  async acceptAndSignup(
+    token: string,
+    name: string,
+    password: string,
+  ): Promise<{
+    success: boolean;
+    user: any;
+    token: string;
+    projectId: string;
+    role: ProjectRole;
+    message: string;
+  }> {
+    return request<{
+      success: boolean;
+      user: any;
+      token: string;
+      projectId: string;
+      role: ProjectRole;
+      message: string;
+    }>(`/invitations/${token}/accept-signup`, {
+      method: "POST",
+      body: JSON.stringify({ name, password }),
+    });
+  },
+
   async resendInvitation(
     invitationId: string,
-  ): Promise<{ success: boolean; message: string }> {
-    return request<{ success: boolean; message: string }>(
+  ): Promise<{ success: boolean; message: string; token?: string }> {
+    return request<{ success: boolean; message: string; token?: string }>(
       `/invitations/${invitationId}/resend`,
       {
         method: "POST",

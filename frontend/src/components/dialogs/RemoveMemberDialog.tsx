@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useUIStore } from "../../stores/useUIStore.js";
 import { useRemoveMember } from "../../hooks/useMembers.js";
 

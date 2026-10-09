@@ -14,7 +14,9 @@ import { invitationService } from "./invitationService.js";
 import { AppError } from "../middleware/errorHandler.js";
 
 export class MembershipService {
-  async listMembers(projectId: string): Promise<any[]> {
+  async listMembers(
+    projectId: string,
+  ): Promise<{ members: any[]; invitations: any[] }> {
     const pId = new Types.ObjectId(projectId);
 
     // Active project members
@@ -25,15 +27,21 @@ export class MembershipService {
       .populate("userId", "name email status createdAt")
       .lean();
 
-    return members.map((m: any) => ({
-      _id: m._id,
-      userId: m.userId?._id,
-      name: m.userId?.name,
-      email: m.userId?.email,
-      role: m.role,
-      status: m.status,
-      joinedAt: m.joinedAt || m.createdAt,
-    }));
+    const invitations =
+      await invitationService.listProjectInvitations(projectId);
+
+    return {
+      members: members.map((m: any) => ({
+        _id: m._id,
+        userId: m.userId?._id,
+        name: m.userId?.name,
+        email: m.userId?.email,
+        role: m.role,
+        status: m.status,
+        joinedAt: m.joinedAt || m.createdAt,
+      })),
+      invitations,
+    };
   }
 
   async addMember(

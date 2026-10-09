@@ -19,6 +19,18 @@ export interface AIResponse {
   outputTokens?: number;
 }
 
+export interface AIStreamResult {
+  totalText: string;
+  model: string;
+  tokens: number;
+  durationMs: number;
+}
+
 export interface AIProvider {
   generateResponse(input: AIRequest): Promise<AIResponse>;
+  streamResponse(
+    input: AIRequest,
+    onChunk: (text: string) => void,
+    isAborted?: () => boolean,
+  ): Promise<AIStreamResult>;
 }

@@ -1,4 +1,3 @@
-import React from "react";
 import { Outlet, Link } from "react-router-dom";
 import { useUIStore } from "../stores/useUIStore.js";
 import { Toast } from "../components/Toast.js";

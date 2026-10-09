@@ -8,6 +8,7 @@ import {
 import { ConversationModel } from "../models/Conversation.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { ENV } from "../config/env.js";
+import { logger } from "../config/logger.js";
 
 const ALLOWED_EXTENSIONS = new Set([
   ".txt",
@@ -110,10 +111,10 @@ export class AttachmentService {
       try {
         await fs.promises.unlink(filePath);
       } catch (err) {
-        console.warn(
-          "[AttachmentService] Could not remove physical file:",
-          err,
-        );
+        logger.warn("[AttachmentService] Could not remove physical file", {
+          filePath,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
 

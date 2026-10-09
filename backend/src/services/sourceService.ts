@@ -1,7 +1,6 @@
 import { Types } from "mongoose";
 import {
   KnowledgeSourceModel,
-  IKnowledgeSource,
   KnowledgeSourceType,
   KnowledgeSourceStatus,
 } from "../models/KnowledgeSource.js";

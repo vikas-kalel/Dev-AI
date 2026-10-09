@@ -3,6 +3,7 @@ import {
   DEFAULT_MODEL,
   FALLBACK_MODELS,
 } from "../config/gemini.js";
+import { logger } from "../config/logger.js";
 
 export interface ChatHistoryItem {
   role: "user" | "model";
@@ -194,11 +195,14 @@ export async function generateChatResponse(
       };
     } catch (err) {
       lastError = err;
-      console.warn(`[GeminiService] Model "${currentModel}" failed:`, err);
+      logger.warn(`[GeminiService] Model "${currentModel}" failed`, {
+        model: currentModel,
+        error: err instanceof Error ? err.message : String(err),
+      });
 
       if (isTransientOrCapacityError(err) && i < modelsToTry.length - 1) {
-        console.warn(
-          `[GeminiService] Transient / capacity error on ${currentModel}. Falling back to ${modelsToTry[i + 1]}...`,
+        logger.warn(
+          `[GeminiService] Transient/capacity error on ${currentModel}. Falling back to ${modelsToTry[i + 1]}...`,
         );
         await new Promise((resolve) => setTimeout(resolve, 300));
         continue;
@@ -304,10 +308,10 @@ export async function generateChatStream(
       };
     } catch (err) {
       lastError = err;
-      console.warn(
-        `[GeminiService Stream] Model "${currentModel}" failed:`,
-        err,
-      );
+      logger.warn(`[GeminiService Stream] Model "${currentModel}" failed`, {
+        model: currentModel,
+        error: err instanceof Error ? err.message : String(err),
+      });
 
       if (isTransientOrCapacityError(err) && i < modelsToTry.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 300));

@@ -1,3 +1,5 @@
+import { useUIStore } from "../stores/useUIStore.js";
+
 interface ChatHeaderProps {
   currentTitle?: string;
   onToggleMobileSidebar: () => void;
@@ -11,20 +13,33 @@ export function ChatHeader({
   onNewSession,
   isStreaming = false,
 }: ChatHeaderProps) {
+  const { isChatSidebarOpen, toggleChatSidebar } = useUIStore();
+
   return (
     <header
       id="devai-header"
-      className="h-14 shrink-0 z-20 bg-white/90 backdrop-blur-md border-b border-zinc-200 flex items-center justify-between px-3.5 sm:px-6 sticky top-0"
+      className="h-14 shrink-0 z-20 bg-white/90 backdrop-blur-md border-b border-zinc-200 flex items-center justify-between px-4 sm:px-6 sticky top-0"
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        {/* Mobile Hamburger Button to open sidebar drawer */}
+        {/* Toggle chats sidebar: on mobile opens drawer, on desktop shows when sidebar collapsed */}
         <button
-          aria-label="Open sidebar"
+          aria-label={isChatSidebarOpen ? "Collapse chats" : "Show chats"}
+          title={isChatSidebarOpen ? "Collapse chats" : "Show chats"}
           type="button"
-          onClick={onToggleMobileSidebar}
-          className="md:hidden p-1.5 -ml-1 text-zinc-600 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.innerWidth < 768) {
+              onToggleMobileSidebar();
+            } else {
+              toggleChatSidebar();
+            }
+          }}
+          className={`p-1.5 -ml-1 text-zinc-600 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer items-center ${
+            isChatSidebarOpen ? "md:hidden flex" : "flex"
+          }`}
         >
-          <span className="material-symbols-outlined text-[20px]">menu</span>
+          <span className="material-symbols-outlined text-[20px]">
+            {isChatSidebarOpen ? "menu" : "left_panel_open"}
+          </span>
         </button>
 
         {/* Current Active Conversation Title & Model indicator */}

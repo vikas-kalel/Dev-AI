@@ -1,4 +1,3 @@
-import React from "react";
 import { useCurrentUser } from "../../hooks/useAuth.js";
 
 export function AdminSettingsPage() {

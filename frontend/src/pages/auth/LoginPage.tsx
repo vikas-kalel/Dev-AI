@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useLogin, useCurrentUser } from "../../hooks/useAuth.js";
+import { useLogin } from "../../hooks/useAuth.js";
 import { authService } from "../../services/authService.js";
 
 export function LoginPage() {
@@ -9,7 +9,7 @@ export function LoginPage() {
   const { mutate: login, isPending } = useLogin();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
 
@@ -67,7 +67,11 @@ export function LoginPage() {
               Password
             </label>
             <Link
-              to="/forgot-password"
+              to={
+                email
+                  ? `/forgot-password?email=${encodeURIComponent(email)}`
+                  : "/forgot-password"
+              }
               className="text-[11px] text-zinc-500 hover:text-zinc-950 transition-colors"
             >
               Forgot password?

@@ -1,5 +1,6 @@
 import { OutboxEventModel } from "../models/OutboxEvent.js";
 import { emailService } from "../services/emailService.js";
+import { logger } from "../config/logger.js";
 
 export class EmailWorker {
   private isRunning: boolean = false;
@@ -10,7 +11,7 @@ export class EmailWorker {
   start(): void {
     if (this.isRunning) return;
     this.isRunning = true;
-    console.log("[Outbox Worker] Email outbox worker started.");
+    logger.info("[Outbox Worker] Email outbox worker started.");
     this.poll();
   }
 
@@ -20,7 +21,7 @@ export class EmailWorker {
       clearTimeout(this.timer);
       this.timer = null;
     }
-    console.log("[Outbox Worker] Email outbox worker stopped.");
+    logger.info("[Outbox Worker] Email outbox worker stopped.");
   }
 
   private poll(): void {
@@ -28,7 +29,9 @@ export class EmailWorker {
 
     this.processPendingEvents()
       .catch((err) => {
-        console.error("[Outbox Worker] Error processing events:", err);
+        logger.error("[Outbox Worker] Error processing events:", {
+          error: err,
+        });
       })
       .finally(() => {
         if (this.isRunning) {
@@ -91,8 +94,9 @@ export class EmailWorker {
             break;
 
           default:
-            console.warn(
+            logger.warn(
               `[Outbox Worker] Unknown eventType: ${event.eventType}`,
+              { eventId: event._id },
             );
             break;
         }
@@ -100,16 +104,23 @@ export class EmailWorker {
         event.status = "COMPLETED";
         event.processedAt = new Date();
         await event.save();
-      } catch (err: any) {
-        console.error(
-          `[Outbox Worker] Failed to process event ${event._id}:`,
-          err,
+        logger.debug(
+          `[Outbox Worker] Event ${event._id} (${event.eventType}) processed successfully.`,
         );
+      } catch (err: any) {
+        logger.error(`[Outbox Worker] Failed to process event ${event._id}`, {
+          eventType: event.eventType,
+          attempt: event.attempts,
+          error: err?.message,
+        });
         const backoffSeconds = Math.pow(2, event.attempts) * 5; // 10s, 20s, 40s...
         event.nextAttemptAt = new Date(Date.now() + backoffSeconds * 1000);
         event.lastError = err?.message || String(err);
         if (event.attempts >= this.maxAttempts) {
           event.status = "FAILED";
+          logger.warn(
+            `[Outbox Worker] Event ${event._id} permanently failed after ${event.attempts} attempts.`,
+          );
         } else {
           event.status = "PENDING";
         }

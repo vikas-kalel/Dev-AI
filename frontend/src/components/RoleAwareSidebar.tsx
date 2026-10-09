@@ -12,9 +12,14 @@ interface RoleAwareSidebarProps {
 export function RoleAwareSidebar({
   currentRole = "DEVELOPER",
   projectId,
-  organizationId,
+  organizationId: _organizationId,
 }: RoleAwareSidebarProps) {
-  const { isMobileSidebarOpen, setMobileSidebarOpen } = useUIStore();
+  const {
+    isNavSidebarOpen,
+    toggleNavSidebar,
+    isMobileSidebarOpen,
+    setMobileSidebarOpen,
+  } = useUIStore();
   const { data: meData } = useCurrentUser();
   const location = useLocation();
   const navigate = useNavigate();
@@ -157,38 +162,27 @@ export function RoleAwareSidebar({
 
   const renderContent = (isMobile: boolean) => (
     <div className="flex flex-col h-full bg-zinc-50/70 border-r border-zinc-200 select-none">
-      {/* Brand Header */}
-      <div className="h-14 shrink-0 flex items-center justify-between px-4 border-b border-zinc-200/90 bg-white">
-        <div
-          onClick={() => {
-            navigate("/projects");
-            if (isMobile) closeMobile();
-          }}
-          className="flex items-center gap-2.5 cursor-pointer"
-        >
-          <div className="w-6 h-6 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-mono font-semibold text-xs shadow-xs">
-            <span className="material-symbols-outlined text-[15px]">
-              terminal
-            </span>
-          </div>
-          <span className="font-semibold text-[15px] tracking-tight text-zinc-950">
-            DevAI
+      {/* Sidebar Header */}
+      <div className="h-14 shrink-0 flex items-center justify-between px-3.5 border-b border-zinc-200/90 bg-white">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px] text-zinc-500">
+            dashboard
+          </span>
+          <span className="font-semibold text-xs uppercase tracking-wider text-zinc-700">
+            {currentRole === "ADMIN" ? "Admin" : "Workspace"}
           </span>
         </div>
 
-        {isMobile ? (
-          <button
-            type="button"
-            onClick={closeMobile}
-            className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950 transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
-        ) : (
-          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-zinc-200/80 text-zinc-600 font-medium">
-            v1.0
+        <button
+          type="button"
+          onClick={() => (isMobile ? closeMobile() : toggleNavSidebar())}
+          title={isMobile ? "Close navigation" : "Collapse navigation"}
+          className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {isMobile ? "close" : "left_panel_close"}
           </span>
-        )}
+        </button>
       </div>
 
       {/* Switch project shortcut button */}
@@ -259,8 +253,12 @@ export function RoleAwareSidebar({
       </div>
 
       {/* Desktop Persistent Left Sidebar */}
-      <aside className="hidden md:flex md:w-60 md:flex-col shrink-0 h-full select-none">
-        {renderContent(false)}
+      <aside
+        className={`hidden md:flex flex-col shrink-0 h-full select-none transition-all duration-200 ease-in-out ${
+          isNavSidebarOpen ? "md:w-60" : "md:w-0 overflow-hidden"
+        }`}
+      >
+        {isNavSidebarOpen && renderContent(false)}
       </aside>
     </>
   );

@@ -16,6 +16,7 @@ export const ENV = {
   PASSWORD_RESET_TOKEN_EXPIRY_HOURS: 2,
   INVITATION_EXPIRY_DAYS: 7,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
+  SMTP_SERVICE: process.env.SMTP_SERVICE || "",
   SMTP_HOST: process.env.SMTP_HOST || "",
   SMTP_PORT: Number(process.env.SMTP_PORT) || 587,
   SMTP_USER: process.env.SMTP_USER || "",

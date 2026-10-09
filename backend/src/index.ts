@@ -5,10 +5,10 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ENV } from "./config/env.js";
+import { logger, httpLogger } from "./config/logger.js";
 import { connectDatabase } from "./config/database.js";
 import { emailWorker } from "./workers/emailWorker.js";
 import { requestIdMiddleware } from "./middleware/requestId.js";
-import { httpLogger, logger } from "./config/logger.js";
 import { authenticateToken } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { getHealth, getReady } from "./controllers/healthController.js";
@@ -61,11 +61,11 @@ async function bootstrap() {
 
     app.listen(PORT, "0.0.0.0", () => {
       logger.info(`Server running on http://0.0.0.0:${PORT}`);
-      logger.info(`Health check available at http://localhost:${PORT}/health`);
-      logger.info(`API v1 available at http://localhost:${PORT}/api/v1`);
+      logger.info(`Health check: http://localhost:${PORT}/health`);
+      logger.info(`API v1: http://localhost:${PORT}/api/v1`);
     });
   } catch (err) {
-    logger.error("Failed to bootstrap server:", { error: err });
+    logger.error("Failed to bootstrap server", { error: err });
     process.exit(1);
   }
 }

@@ -1,6 +1,7 @@
 import mongoose, { Schema, Types } from "mongoose";
 
 export type MessageRole = "USER" | "ASSISTANT" | "SYSTEM" | "TOOL";
+export type MessageStatus = "DONE" | "STREAMING" | "PARTIAL" | "FAILED";
 
 export interface IMessage {
   _id: Types.ObjectId;
@@ -9,6 +10,7 @@ export interface IMessage {
   conversationId: Types.ObjectId;
   role: MessageRole;
   content: string;
+  status: MessageStatus;
   model?: string;
   inputTokens?: number;
   outputTokens?: number;
@@ -34,7 +36,12 @@ const MessageSchema = new Schema<IMessage>(
       enum: ["USER", "ASSISTANT", "SYSTEM", "TOOL"],
       required: true,
     },
-    content: { type: String, required: true },
+    content: { type: String, default: "" },
+    status: {
+      type: String,
+      enum: ["DONE", "STREAMING", "PARTIAL", "FAILED"],
+      default: "DONE",
+    },
     model: { type: String },
     inputTokens: { type: Number, default: 0 },
     outputTokens: { type: Number, default: 0 },

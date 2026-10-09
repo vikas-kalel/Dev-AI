@@ -22,6 +22,11 @@ export function AppLayout() {
   const { data: projectData } = useProject(projectId || null);
   const { toasts, removeToast } = useUIStore();
 
+  // Determine current active role & routing context
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const orgMembership = meData?.organizations?.[0];
+  const isOrgAdmin = orgMembership?.role === "ADMIN";
+
   // Redirect to login if user is not authenticated
   useEffect(() => {
     if (!isMeLoading && !meData?.user) {
@@ -29,13 +34,17 @@ export function AppLayout() {
     }
   }, [meData, isMeLoading, navigate]);
 
-  // Determine current active role
-  const isAdminRoute = location.pathname.startsWith("/admin");
-  const orgMembership = meData?.organizations?.[0];
-  const isOrgAdmin = orgMembership?.role === "ADMIN";
+  // Redirect non-admin users trying to access /admin routes to /projects
+  useEffect(() => {
+    if (!isMeLoading && meData?.user) {
+      if (isAdminRoute && !isOrgAdmin) {
+        navigate("/projects", { replace: true });
+      }
+    }
+  }, [isAdminRoute, isOrgAdmin, isMeLoading, meData, navigate]);
 
   let currentRole: "ADMIN" | "MAINTAINER" | "DEVELOPER" = "DEVELOPER";
-  if (isAdminRoute || (isOrgAdmin && !projectId)) {
+  if (isOrgAdmin && (isAdminRoute || !projectId)) {
     currentRole = "ADMIN";
   } else if (projectData?.project?.role === "MAINTAINER" || isOrgAdmin) {
     currentRole = "MAINTAINER";

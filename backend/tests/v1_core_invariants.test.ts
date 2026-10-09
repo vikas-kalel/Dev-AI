@@ -86,7 +86,7 @@ async function runTests() {
     );
     assert.strictEqual(project.slug, "payment-platform");
 
-    const projectMembers = await membershipService.listMembers(
+    const { members: projectMembers } = await membershipService.listMembers(
       project._id.toString(),
     );
     assert.strictEqual(projectMembers.length, 1);
@@ -116,7 +116,7 @@ async function runTests() {
     );
     assert.strictEqual(addResult.type, "MEMBERSHIP");
 
-    const membersAfterAdd = await membershipService.listMembers(
+    const { members: membersAfterAdd } = await membershipService.listMembers(
       project._id.toString(),
     );
     assert.strictEqual(membersAfterAdd.length, 2);
@@ -129,9 +129,8 @@ async function runTests() {
       "MAINTAINER",
       verifiedUser._id.toString(),
     );
-    const membersAfterPromote = await membershipService.listMembers(
-      project._id.toString(),
-    );
+    const { members: membersAfterPromote } =
+      await membershipService.listMembers(project._id.toString());
     const alanMem = membersAfterPromote.find(
       (m) => m.email === "alan@example.com",
     );

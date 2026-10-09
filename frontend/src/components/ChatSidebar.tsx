@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import type { ChatSession } from "../types/chat.ts";
+import type { ChatSession } from "../types/chat.js";
+import { useUIStore } from "../stores/useUIStore.js";
 
 interface ChatSidebarProps {
   sessions: ChatSession[];
@@ -22,6 +23,7 @@ export function ChatSidebar({
   isMobileOpen,
   onCloseMobile,
 }: ChatSidebarProps) {
+  const { isChatSidebarOpen, toggleChatSidebar } = useUIStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -132,16 +134,14 @@ export function ChatSidebar({
   // Reusable Sidebar Content
   const renderSidebarContent = (isMobile: boolean) => (
     <div className="flex flex-col h-full">
-      {/* 1. Brand Header */}
-      <div className="h-14 shrink-0 flex items-center justify-between px-4 border-b border-zinc-200/80 bg-white">
-        <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-mono font-semibold text-xs shadow-xs">
-            <span className="material-symbols-outlined text-[15px]">
-              terminal
-            </span>
-          </div>
-          <span className="font-semibold text-[15px] tracking-tight text-zinc-950">
-            DevAI
+      {/* 1. Sidebar Header */}
+      <div className="h-14 shrink-0 flex items-center justify-between px-3.5 border-b border-zinc-200/80 bg-white">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px] text-zinc-500">
+            forum
+          </span>
+          <span className="font-semibold text-xs uppercase tracking-wider text-zinc-700">
+            Chats
           </span>
         </div>
 
@@ -155,11 +155,17 @@ export function ChatSidebar({
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         ) : (
-          <div className="flex items-center gap-1">
-            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-zinc-200/70 text-zinc-600 font-medium">
-              v2.4
+          <button
+            type="button"
+            onClick={toggleChatSidebar}
+            aria-label="Collapse chats sidebar"
+            title="Collapse chats"
+            className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              left_panel_close
             </span>
-          </div>
+          </button>
         )}
       </div>
 
@@ -195,17 +201,19 @@ export function ChatSidebar({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-8 pr-7 py-1.5 bg-white hover:border-zinc-300 focus:bg-white text-xs text-zinc-900 placeholder:text-zinc-400 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 transition-all font-sans shadow-2xs"
+            className="w-full pl-8 pr-7 py-1.5 bg-zinc-100/80 hover:bg-zinc-100 focus:bg-white text-zinc-900 placeholder:text-zinc-400 text-xs rounded-lg border border-transparent focus:border-zinc-300 focus:outline-hidden transition-all"
           />
           {searchQuery && (
             <button
               type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2 text-zinc-400 hover:text-zinc-700 p-0.5 rounded cursor-pointer"
-              title="Clear search"
+              onClick={() => {
+                setSearchQuery("");
+                searchInputRef.current?.focus();
+              }}
+              className="absolute right-2 text-zinc-400 hover:text-zinc-700 p-0.5"
             >
-              <span className="material-symbols-outlined text-[13px]">
-                close
+              <span className="material-symbols-outlined text-[14px]">
+                cancel
               </span>
             </button>
           )}
@@ -213,90 +221,61 @@ export function ChatSidebar({
       </div>
 
       {/* 4. Grouped Conversation History List */}
-      <div className="flex-1 overflow-y-auto px-2.5 space-y-4 pr-1.5">
-        {searchQuery && (
-          <div className="px-2 pt-1 font-mono text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
-            Results ({filteredSessions.length})
-          </div>
-        )}
-
+      <div className="flex-1 overflow-y-auto px-2 space-y-4 pb-4">
         {filteredSessions.length === 0 ? (
-          <div className="text-center py-8 px-3 text-zinc-400 text-xs">
-            {searchQuery
-              ? "No matching conversations found"
-              : "No previous chats"}
+          <div className="px-3 py-8 text-center">
+            <span className="material-symbols-outlined text-zinc-300 text-[24px] mb-1">
+              chat_bubble_outline
+            </span>
+            <p className="text-xs text-zinc-500 font-medium">
+              {searchQuery ? "No matches found" : "No conversations yet"}
+            </p>
+            <p className="text-[11px] text-zinc-400 mt-0.5">
+              {searchQuery
+                ? "Try a different search term"
+                : "Start a chat to build history"}
+            </p>
           </div>
         ) : (
           groupedSessions.map((group) => (
-            <div key={group.label}>
-              <div className="px-2 mb-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
+            <div key={group.label} className="space-y-1">
+              <div className="px-2.5 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider text-zinc-400 select-none">
                 {group.label}
               </div>
+
               <div className="space-y-0.5">
                 {group.items.map((session) => {
                   const isActive = session.id === activeSessionId;
-                  const isEditing = session.id === editingSessionId;
+                  const isEditing = editingSessionId === session.id;
 
                   if (isEditing) {
                     return (
                       <div
                         key={session.id}
-                        className="px-2 py-1.5 rounded-lg bg-white border border-zinc-900 shadow-xs"
-                        onClick={(e) => e.stopPropagation()}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-100 border border-zinc-300 flex items-center gap-1.5"
                       >
                         <input
                           ref={editInputRef}
                           type="text"
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
-                          onBlur={() => handleSaveRename(session.id)}
                           onKeyDown={(e) => handleKeyDownRename(session.id, e)}
-                          className="w-full text-xs text-zinc-950 font-medium focus:outline-none bg-transparent"
-                          placeholder="Conversation title"
+                          onBlur={() => handleSaveRename(session.id)}
+                          className="flex-1 text-xs bg-transparent border-0 p-0 focus:outline-hidden text-zinc-950 font-medium"
                         />
-                      </div>
-                    );
-                  }
-
-                  if (isActive) {
-                    return (
-                      <div
-                        key={session.id}
-                        onClick={() => {
-                          onSelectSession(session.id);
-                          if (isMobile) onCloseMobile();
-                        }}
-                        className="group relative flex items-center justify-between px-2.5 py-2 rounded-lg bg-white border border-zinc-200/90 text-zinc-950 text-xs font-medium shadow-xs cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2 min-w-0 pr-1 flex-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                          <span className="truncate">{session.title}</span>
-                        </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={(e) => handleStartRename(session, e)}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
-                            title="Rename"
-                          >
-                            <span className="material-symbols-outlined text-[13px]">
-                              edit
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteSession(session.id);
-                            }}
-                            className="p-1 text-zinc-400 hover:text-rose-600 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
-                            title="Delete"
-                          >
-                            <span className="material-symbols-outlined text-[13px]">
-                              delete
-                            </span>
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSaveRename(session.id);
+                          }}
+                          className="text-zinc-500 hover:text-zinc-900 p-0.5"
+                          title="Save"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">
+                            check
+                          </span>
+                        </button>
                       </div>
                     );
                   }
@@ -308,15 +287,33 @@ export function ChatSidebar({
                         onSelectSession(session.id);
                         if (isMobile) onCloseMobile();
                       }}
-                      className="group relative flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-zinc-100/80 text-zinc-600 hover:text-zinc-950 text-xs transition-colors cursor-pointer"
+                      className={`group relative flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-colors cursor-pointer ${
+                        isActive
+                          ? "bg-zinc-200/80 text-zinc-950 font-medium shadow-2xs"
+                          : "text-zinc-700 hover:bg-zinc-100/80 hover:text-zinc-950"
+                      }`}
                     >
-                      <div className="flex items-center gap-2 min-w-0 pr-1 flex-1">
-                        <span className="material-symbols-outlined text-[15px] text-zinc-400 shrink-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-1 mr-1">
+                        <span
+                          className={`material-symbols-outlined text-[15px] shrink-0 ${
+                            isActive ? "text-zinc-950" : "text-zinc-400"
+                          }`}
+                        >
                           chat_bubble_outline
                         </span>
-                        <span className="truncate">{session.title}</span>
+                        <span className="truncate leading-tight">
+                          {session.title || "Untitled Session"}
+                        </span>
                       </div>
-                      <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+
+                      {/* Action buttons (Rename / Delete) visible on hover or active */}
+                      <div
+                        className={`flex items-center gap-0.5 shrink-0 transition-opacity ${
+                          isActive
+                            ? "opacity-100"
+                            : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={(e) => handleStartRename(session, e)}
@@ -378,9 +375,13 @@ export function ChatSidebar({
       {/* Desktop Persistent Left Sidebar */}
       <aside
         id="desktop-sidebar"
-        className="hidden md:flex md:w-64 md:flex-col shrink-0 border-r border-zinc-200 bg-zinc-50/50 h-full select-none"
+        className={`hidden md:flex flex-col shrink-0 border-zinc-200 bg-zinc-50/50 h-full select-none transition-all duration-200 ease-in-out ${
+          isChatSidebarOpen
+            ? "md:w-64 border-r"
+            : "md:w-0 overflow-hidden border-r-0"
+        }`}
       >
-        {renderSidebarContent(false)}
+        {isChatSidebarOpen && renderSidebarContent(false)}
       </aside>
     </>
   );

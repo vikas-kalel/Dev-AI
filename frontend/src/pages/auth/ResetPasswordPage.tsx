@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, type FormEvent } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { authService } from "../../services/authService.js";
 
 export function ResetPasswordPage() {
@@ -12,9 +12,8 @@ export function ResetPasswordPage() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
