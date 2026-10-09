@@ -4,10 +4,11 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   onStop?: () => void;
   onScrollBottom?: () => void;
-  showScrollBottom: boolean;
+  showScrollBottom?: boolean;
   isLoading: boolean;
   initialValue?: string;
-  onToast: (msg: string) => void;
+  onToast?: (msg: string) => void;
+  onFileUpload?: (file: File) => void;
 }
 
 const MAX_CHARS = 2048;
@@ -54,15 +55,17 @@ export function ChatInput({
   onSend,
   onStop,
   onScrollBottom,
-  showScrollBottom,
+  showScrollBottom = false,
   isLoading,
   initialValue = "",
-  onToast,
+  onToast = () => {},
+  onFileUpload,
 }: ChatInputProps) {
   const [text, setText] = useState(initialValue);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isVoiceEnabledRef = useRef(false);
   const baseTextRef = useRef(initialValue);
@@ -162,10 +165,14 @@ export function ChatInput({
           }
         }
 
-        const recognizedUtterance = [finalChunk, interimChunk].filter(Boolean).join(" ");
+        const recognizedUtterance = [finalChunk, interimChunk]
+          .filter(Boolean)
+          .join(" ");
         const base = baseTextRef.current.trim();
         const nextText = base
-          ? (recognizedUtterance ? `${base} ${recognizedUtterance}` : base)
+          ? recognizedUtterance
+            ? `${base} ${recognizedUtterance}`
+            : base
           : recognizedUtterance;
 
         setText(nextText);
@@ -284,9 +291,9 @@ export function ChatInput({
   return (
     <div
       id="composer-dock"
-      className="fixed inset-x-0 z-30 pointer-events-none bottom-8 sm:bottom-8"
+      className="absolute inset-x-0 bottom-8 z-30 pointer-events-none"
     >
-      <div className="max-w-3xl mx-auto px-2.5 sm:px-6 pointer-events-auto flex flex-col items-center">
+      <div className="w-full px-4 sm:px-6 pointer-events-auto flex flex-col items-center">
         {/* Scroll to bottom button: ONLY visible when generation is in progress AND user is scrolled up */}
         {showScrollBottom && onScrollBottom && (
           <div className="mb-2">
@@ -296,7 +303,9 @@ export function ChatInput({
               onClick={onScrollBottom}
               className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/95 hover:bg-white text-zinc-700 hover:text-zinc-950 border border-zinc-200/90 rounded-full text-xs font-medium shadow-sm transition-all hover:border-zinc-300 cursor-pointer animate-fade-in"
             >
-              <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
+              <span className="material-symbols-outlined text-[14px]">
+                arrow_downward
+              </span>
               <span>Scroll to bottom</span>
             </button>
           </div>
@@ -304,7 +313,10 @@ export function ChatInput({
 
         {/* Composer Card */}
         <div className="w-full border hover:border-zinc-400 focus-within:border-zinc-900 rounded-2xl shadow-lg transition-all bg-white border-zinc-200">
-          <form onSubmit={handleSubmit} className="p-2.5 sm:p-3.5 pb-2.5 flex flex-col">
+          <form
+            onSubmit={handleSubmit}
+            className="p-2.5 sm:p-3.5 pb-2.5 flex flex-col"
+          >
             <label className="sr-only" htmlFor="prompt-input">
               Type a prompt
             </label>
@@ -362,8 +374,36 @@ export function ChatInput({
                 )}
               </div>
 
-              {/* Right: Speech-to-Text, Stop & Generate */}
+              {/* Right: Attach, Speech-to-Text, Stop & Generate */}
               <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+                {onFileUpload && (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) {
+                          onFileUpload(f);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Attach file context"
+                      className="h-7 px-2.5 rounded-full text-xs font-medium border border-zinc-200 hover:border-zinc-300 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">
+                        attach_file
+                      </span>
+                      <span>Attach</span>
+                    </button>
+                  </>
+                )}
+
                 {/* Persistent voice input toggle button (Enable/Disable) */}
                 <button
                   id="speech-to-text-btn"
@@ -386,12 +426,16 @@ export function ChatInput({
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                       </span>
-                      <span className="material-symbols-outlined text-[15px]">mic</span>
+                      <span className="material-symbols-outlined text-[15px]">
+                        mic
+                      </span>
                       <span>Voice: ON</span>
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-[15px]">mic_off</span>
+                      <span className="material-symbols-outlined text-[15px]">
+                        mic_off
+                      </span>
                       <span>Voice: OFF</span>
                     </>
                   )}
@@ -428,7 +472,9 @@ export function ChatInput({
                     className="h-7 px-3 sm:px-3.5 rounded-full bg-zinc-900 text-white text-xs font-medium hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                   >
                     <span>Generate</span>
-                    <span className="material-symbols-outlined text-[14px]">arrow_upward</span>
+                    <span className="material-symbols-outlined text-[14px]">
+                      arrow_upward
+                    </span>
                   </button>
                 )}
               </div>

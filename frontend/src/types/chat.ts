@@ -1,6 +1,15 @@
-export type MessageRole = "user" | "assistant";
+export type MessageRole = "user" | "assistant" | "system";
 
 export type MessageStatus = "sending" | "streaming" | "sent" | "error";
+
+export interface ChatAttachment {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  processingStatus: "PENDING" | "PROCESSING" | "READY" | "FAILED";
+  createdAt: string;
+}
 
 export interface ChatMessage {
   id: string;
@@ -15,8 +24,18 @@ export interface ChatMessage {
 }
 
 export interface ChatHistoryPayload {
-  role: "user" | "assistant";
+  role: MessageRole;
   content: string;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  projectId?: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: ChatMessage[];
+  attachments?: ChatAttachment[];
 }
 
 export interface AskApiResponse {

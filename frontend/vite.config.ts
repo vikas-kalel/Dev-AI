@@ -14,6 +14,19 @@ export default defineConfig(() => {
     server: {
       port: 5173,
       proxy: {
+        // SSE streaming endpoints — must not buffer, flush immediately
+        "/api/v1/conversations": {
+          target: "http://localhost:5000",
+          changeOrigin: true,
+          // Disable response buffering so SSE chunks reach the browser immediately
+          configure: (proxy) => {
+            proxy.on("proxyReq", (_proxyReq, _req, res) => {
+              // Tell the proxy not to buffer — flush headers immediately
+              (res as any).flushHeaders?.();
+            });
+          },
+        },
+        // All other /api routes
         "/api": {
           target: "http://localhost:5000",
           changeOrigin: true,

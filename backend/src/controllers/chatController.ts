@@ -1,9 +1,7 @@
-import type { Request, Response, NextFunction } from "express";
-import {
-  generateChatResponse,
-  generateChatStream,
-} from "../services/geminiService.js";
+import type { Request, Response } from "express";
+import { generateChatStream } from "../services/geminiService.js";
 import { DEFAULT_MODEL } from "../config/gemini.js";
+import { logger } from "../config/logger.js";
 
 export async function streamChat(req: Request, res: Response): Promise<void> {
   const { prompt, history, model } = req.body;
@@ -77,7 +75,10 @@ export async function streamChat(req: Request, res: Response): Promise<void> {
       error instanceof Error
         ? error.message
         : "Failed to generate stream response.";
-    console.error("[StreamChat Error]", error);
+    logger.error("[StreamChat Error]", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     if (!clientDisconnected) {
       res.write(
         `data: ${JSON.stringify({ type: "error", error: errMsg })}\n\n`,
